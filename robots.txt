@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 
 # 배포 후 아래 줄의 주소를 실제 사이트 주소로 바꾸세요 (README 참고)
-Sitemap: https://YOUR-USERNAME.github.io/YOUR-REPO/sitemap.xml
+Sitemap: https://dinghy-lab.netlify.app/sitemap.xml

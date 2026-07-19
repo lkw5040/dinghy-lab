@@ -1,5 +1,5 @@
 /* Service worker — bump VERSION on every deploy so visitors get the new files */
-const VERSION = "v1.0.0";
+const VERSION = "v1.0.1";
 const CACHE = `dinghy-lab-${VERSION}`;
 const CORE = [
   "./",
