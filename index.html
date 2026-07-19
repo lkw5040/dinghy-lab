@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Dinghy Lab — Sailing Right-of-Way Simulator & 2-Player Race Game (RRS 2025-2028)</title>
+    <meta
+      name="description"
+      content="Free sailing tools: an interactive right-of-way simulator and a 2-player dinghy race game based on the Racing Rules of Sailing 2025-2028. English, 한국어, Español, Français, Deutsch."
+    />
+    <meta name="theme-color" content="#082c3c" />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Dinghy Lab" />
+    <meta property="og:title" content="Dinghy Lab — Sailing Right-of-Way Simulator & Race Game" />
+    <meta property="og:description" content="Learn who keeps clear in seconds, then race a friend on one keyboard. Based on RRS 2025-2028. Five languages." />
+    <meta property="og:image" content="assets/hero-dinghy.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="assets/icons/icon-192.png" type="image/png" />
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
+    <link rel="stylesheet" href="sim.css" />
+    <link rel="stylesheet" href="hub.css" />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Dinghy Lab",
+      "description": "Free sailing right-of-way simulator and 2-player dinghy race game based on the Racing Rules of Sailing 2025-2028",
+      "inLanguage": ["en", "ko", "es", "fr", "de"]
+    }
+    </script>
+  </head>
+  <body>
+    <header class="hub-header">
+      <a class="hub-brand" href="index.html"><span class="hub-brand-mark" aria-hidden="true">⛵</span><span>Dinghy Lab</span></a>
+      <nav class="hub-nav" aria-label="Main menu">
+        <a href="index.html" class="active" data-i18n="navHome">Home</a>
+        <a href="simulator.html" data-i18n="navSimulator">Rules Simulator</a>
+        <a href="game.html" data-i18n="navGame">Race Game</a>
+      </nav>
+      <div class="hub-actions">
+        <button type="button" id="installApp" class="hub-install" hidden data-i18n="installApp">📱 Install app</button>
+        <select id="hubLang" class="hub-lang" aria-label="Language"></select>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-inner">
+          <div class="hero-copy">
+            <p class="eyebrow" data-i18n="heroEyebrow">DINGHY SAILING · RRS 2025-2028</p>
+            <h1 data-i18n="heroTitle">Learn the right of way.<br />Then race your friend.</h1>
+            <p class="hero-lede" data-i18n="heroLead">
+              Two free tools for dinghy sailors: an interactive simulator that shows who must keep clear in color,
+              and a two-player race game on one keyboard — both based on the World Sailing Racing Rules of Sailing 2025-2028.
+            </p>
+            <div class="hero-buttons">
+              <a class="btn btn-primary" href="simulator.html" data-i18n="heroCtaSim">Open the simulator</a>
+              <a class="btn btn-ghost" href="game.html" data-i18n="heroCtaGame">Play the race game</a>
+            </div>
+          </div>
+          <aside class="hero-card">
+            <p class="hero-card-title" data-i18n="heroCardTitle">What's inside</p>
+            <p class="color-line"><span class="dot green"></span><strong data-i18n="heroCardSim">Right-of-way simulator + quiz</strong></p>
+            <p class="color-line"><span class="dot red"></span><strong data-i18n="heroCardGame">2-player race with penalties</strong></p>
+            <p class="hero-card-note" data-i18n="heroCardNote">Free, no sign-up, works offline as an installable app.</p>
+          </aside>
+        </div>
+        <div class="hero-wave" aria-hidden="true"></div>
+      </section>
+
+      <section class="sim-band">
+        <div class="section-inner">
+          <div class="section-heading">
+            <p class="eyebrow" data-i18n="cardsEyebrow">TWO TOOLS, ONE SITE</p>
+            <h2 data-i18n="cardsTitle">Pick where to start</h2>
+            <p data-i18n="cardsLead">Learn the rules first, or jump straight into a race — both use the same rule engine.</p>
+          </div>
+          <div class="hub-cards">
+            <a class="hub-card" href="simulator.html">
+              <span class="hub-card-icon" aria-hidden="true">🧭</span>
+              <h3 data-i18n="cardSimTitle">Right-of-Way Simulator</h3>
+              <p data-i18n="cardSimDesc">Drag two boats and the wind — the boat that must keep clear turns red instantly, with the rule (RRS 10-13) and a plain-language reason. Includes a sail-along mode, a 3-second cheat sheet and a 10-question quiz.</p>
+              <span class="hub-card-cta" data-i18n="cardSimCta">Start simulating →</span>
+            </a>
+            <a class="hub-card" href="game.html">
+              <span class="hub-card-icon" aria-hidden="true">🏁</span>
+              <h3 data-i18n="cardGameTitle">2-Player Race Game</h3>
+              <p data-i18n="cardGameDesc">One keyboard, two helms. Real start sequence with flags, shifting wind, mark roundings, live right-of-way calls and penalty turns — everything a real dinghy race throws at you.</p>
+              <span class="hub-card-cta" data-i18n="cardGameCta">Start racing →</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section class="hub-ad-section" aria-label="Advertisement">
+        <span class="hub-ad-label" data-i18n="adLabel">ADVERTISEMENT</span>
+        <div class="hub-ad-slot" data-ad-position="home">
+          <strong data-i18n="adPlaceholder">Ad placement</strong>
+          <small data-i18n="adPlaceholderNote">Ads appear here automatically after AdSense approval.</small>
+        </div>
+      </section>
+
+      <section class="rules-band">
+        <div class="section-inner">
+          <div class="section-heading">
+            <p class="eyebrow" data-i18n="seoEyebrow">WHY RIGHT OF WAY MATTERS</p>
+            <h2 data-i18n="seoTitle">Who keeps clear? The question every sailor must answer in seconds.</h2>
+          </div>
+          <p data-i18n="seoP1">
+            In dinghy sailing, two boats meet dozens of times per race — and every time, the Racing Rules of Sailing
+            decide who holds course and who keeps clear. Port tack gives way to starboard (Rule 10), windward keeps
+            clear of leeward (Rule 11), the boat behind keeps clear of the boat ahead (Rule 12), and a tacking boat
+            keeps clear of everyone (Rule 13).
+          </p>
+          <p data-i18n="seoP2">
+            Dinghy Lab turns those rules into things you can see: move the boats and watch the decision change,
+            then test yourself in a real race against a friend. Made for sailing club beginners, updated for the
+            2025-2028 rulebook including the revised mark-room rule.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="hub-footer">
+      <p data-i18n="footerLine"></p>
+      <nav class="hub-footer-links" aria-label="Site info">
+        <a href="about.html" data-i18n="footerAbout">About</a>
+        <a href="privacy.html" data-i18n="footerPrivacy">Privacy</a>
+        <a href="terms.html" data-i18n="footerTerms">Terms</a>
+        <button id="hubConsentSettings" type="button" data-i18n="footerConsent">Privacy settings</button>
+        <a href="https://www.sailing.org/inside-worldsailing/rules-regulations/racingrules/" target="_blank" rel="noreferrer">World Sailing RRS</a>
+      </nav>
+    </footer>
+
+    <aside class="hub-consent" id="hubConsent" hidden aria-labelledby="hubConsentTitle">
+      <div>
+        <strong id="hubConsentTitle" data-i18n="consentTitle">Ads & analytics</strong>
+        <p><span data-i18n="consentBody"></span> <a href="privacy.html" data-i18n="consentMore">Learn more</a></p>
+      </div>
+      <div class="hub-consent-actions">
+        <button class="hub-consent-reject" id="hubConsentReject" type="button" data-i18n="consentReject">Decline optional</button>
+        <button class="hub-consent-accept" id="hubConsentAccept" type="button" data-i18n="consentAccept">Accept and continue</button>
+      </div>
+    </aside>
+
+    <script src="site-config.js"></script>
+    <script>
+      window.PAGE_I18N = {
+        en: {
+          metaTitle: "Dinghy Lab — Sailing Right-of-Way Simulator & 2-Player Race Game (RRS 2025-2028)",
+          metaDesc: "Free sailing tools: an interactive right-of-way simulator and a 2-player dinghy race game based on the Racing Rules of Sailing 2025-2028.",
+          heroEyebrow: "DINGHY SAILING · RRS 2025-2028",
+          heroTitle: "Learn the right of way.<br />Then race your friend.",
+          heroLead: "Two free tools for dinghy sailors: an interactive simulator that shows who must keep clear in color, and a two-player race game on one keyboard — both based on the World Sailing Racing Rules of Sailing 2025-2028.",
+          heroCtaSim: "Open the simulator",
+          heroCtaGame: "Play the race game",
+          heroCardTitle: "What's inside",
+          heroCardSim: "Right-of-way simulator + quiz",
+          heroCardGame: "2-player race with penalties",
+          heroCardNote: "Free, no sign-up, works offline as an installable app.",
+          cardsEyebrow: "TWO TOOLS, ONE SITE",
+          cardsTitle: "Pick where to start",
+          cardsLead: "Learn the rules first, or jump straight into a race — both use the same rule engine.",
+          cardSimTitle: "Right-of-Way Simulator",
+          cardSimDesc: "Drag two boats and the wind — the boat that must keep clear turns red instantly, with the rule (RRS 10-13) and a plain-language reason. Includes a sail-along mode, a 3-second cheat sheet and a 10-question quiz.",
+          cardSimCta: "Start simulating →",
+          cardGameTitle: "2-Player Race Game",
+          cardGameDesc: "One keyboard, two helms. Real start sequence with flags, shifting wind, mark roundings, live right-of-way calls and penalty turns — everything a real dinghy race throws at you.",
+          cardGameCta: "Start racing →",
+          seoEyebrow: "WHY RIGHT OF WAY MATTERS",
+          seoTitle: "Who keeps clear? The question every sailor must answer in seconds.",
+          seoP1: "In dinghy sailing, two boats meet dozens of times per race — and every time, the Racing Rules of Sailing decide who holds course and who keeps clear. Port tack gives way to starboard (Rule 10), windward keeps clear of leeward (Rule 11), the boat behind keeps clear of the boat ahead (Rule 12), and a tacking boat keeps clear of everyone (Rule 13).",
+          seoP2: "Dinghy Lab turns those rules into things you can see: move the boats and watch the decision change, then test yourself in a real race against a friend. Made for sailing club beginners, updated for the 2025-2028 rulebook including the revised mark-room rule.",
+        },
+        ko: {
+          metaTitle: "Dinghy Lab — 세일링 권리정 시뮬레이터 & 2인 레이스 게임 (RRS 2025-2028)",
+          metaDesc: "무료 세일링 도구: 권리정을 색으로 판정하는 시뮬레이터와 한 키보드 2인 딩기요트 레이스 게임. Racing Rules of Sailing 2025-2028 기반.",
+          heroEyebrow: "DINGHY SAILING · RRS 2025-2028",
+          heroTitle: "권리정을 배우고,<br />친구와 레이스하세요.",
+          heroLead: "딩기 세일러를 위한 무료 도구 두 가지 — 누가 피해야 하는지 색으로 보여주는 시뮬레이터, 그리고 한 키보드로 즐기는 2인 레이스 게임. 모두 World Sailing RRS 2025-2028 기반입니다.",
+          heroCtaSim: "시뮬레이터 열기",
+          heroCtaGame: "레이스 게임 하기",
+          heroCardTitle: "무엇이 있나요",
+          heroCardSim: "권리정 시뮬레이터 + 퀴즈",
+          heroCardGame: "벌칙까지 있는 2인 레이스",
+          heroCardNote: "무료, 가입 없음, 앱으로 설치하면 오프라인에서도 동작합니다.",
+          cardsEyebrow: "한 사이트, 두 가지 도구",
+          cardsTitle: "어디서 시작할까요?",
+          cardsLead: "규칙을 먼저 배우거나, 바로 레이스에 뛰어드세요 — 두 도구는 같은 판정 엔진을 사용합니다.",
+          cardSimTitle: "권리정 시뮬레이터",
+          cardSimDesc: "두 보트와 바람을 드래그하면 피해야 하는 배가 즉시 빨간색으로 표시되고, 적용 규칙(RRS 10-13)과 이유가 함께 나옵니다. 항해 재생, 3초 치트키, 10문제 퀴즈 포함.",
+          cardSimCta: "시뮬레이션 시작 →",
+          cardGameTitle: "2인 레이스 게임",
+          cardGameDesc: "한 키보드, 두 명의 헬름. 깃발 스타트 시퀀스, 변하는 바람, 마크 라운딩, 실시간 권리정 판정과 벌칙 회전까지 — 실제 딩기 레이스의 모든 것.",
+          cardGameCta: "레이스 시작 →",
+          seoEyebrow: "권리정이 중요한 이유",
+          seoTitle: "누가 피해야 할까? 모든 세일러가 몇 초 안에 답해야 하는 질문.",
+          seoP1: "딩기 세일링에서 두 배는 한 경기에 수십 번 만나고, 그때마다 Racing Rules of Sailing이 누가 진로를 유지하고 누가 피할지를 정합니다. 포트 택은 스타보드 택에 양보(룰 10), 풍상은 풍하에 양보(룰 11), 뒤 배는 앞 배에 양보(룰 12), 태킹 중인 배는 모두에게 양보(룰 13)합니다.",
+          seoP2: "Dinghy Lab은 이 규칙을 눈으로 보이게 만듭니다. 배를 움직이며 판정이 바뀌는 것을 확인하고, 친구와의 실전 레이스로 시험해보세요. 요트부 신입을 위해 만들었고, 개정된 마크룸 규칙을 포함한 2025-2028 룰북 기준입니다.",
+        },
+        es: {
+          metaTitle: "Dinghy Lab — Simulador de derecho de paso y juego de regatas para 2 (RRS 2025-2028)",
+          metaDesc: "Herramientas de vela gratuitas: un simulador interactivo de derecho de paso y un juego de regatas para dos jugadores, basados en el Reglamento de Regatas a Vela 2025-2028.",
+          heroEyebrow: "VELA LIGERA · RRS 2025-2028",
+          heroTitle: "Aprende el derecho de paso.<br />Luego compite con tu amigo.",
+          heroLead: "Dos herramientas gratuitas para regatistas: un simulador que muestra en color quién debe mantenerse separado, y un juego de regatas para dos en un mismo teclado — ambos basados en el RRS 2025-2028 de World Sailing.",
+          heroCtaSim: "Abrir el simulador",
+          heroCtaGame: "Jugar a la regata",
+          heroCardTitle: "Qué encontrarás",
+          heroCardSim: "Simulador de derecho de paso + quiz",
+          heroCardGame: "Regata para 2 con penalizaciones",
+          heroCardNote: "Gratis, sin registro, funciona sin conexión como app instalable.",
+          cardsEyebrow: "DOS HERRAMIENTAS, UN SITIO",
+          cardsTitle: "Elige por dónde empezar",
+          cardsLead: "Aprende primero las reglas o lánzate a la regata — ambas usan el mismo motor de reglas.",
+          cardSimTitle: "Simulador de derecho de paso",
+          cardSimDesc: "Arrastra los barcos y el viento: el barco que debe mantenerse separado se vuelve rojo al instante, con la regla (RRS 10-13) y una explicación clara. Incluye modo navegación, chuleta de 3 segundos y quiz de 10 preguntas.",
+          cardSimCta: "Empezar a simular →",
+          cardGameTitle: "Juego de regatas para 2",
+          cardGameDesc: "Un teclado, dos patrones. Secuencia de salida con banderas, viento cambiante, rodeo de balizas, derecho de paso en vivo y giros de penalización — todo lo que exige una regata real.",
+          cardGameCta: "Empezar a competir →",
+          seoEyebrow: "POR QUÉ IMPORTA EL DERECHO DE PASO",
+          seoTitle: "¿Quién se mantiene separado? La pregunta que todo regatista responde en segundos.",
+          seoP1: "En vela ligera, dos barcos se cruzan decenas de veces por regata, y cada vez el Reglamento decide quién mantiene el rumbo y quién se aparta. Amurado a babor cede a estribor (Regla 10), barlovento cede a sotavento (Regla 11), el de atrás cede al de delante (Regla 12) y el barco que vira cede a todos (Regla 13).",
+          seoP2: "Dinghy Lab convierte esas reglas en algo visible: mueve los barcos y observa cómo cambia la decisión, y luego ponte a prueba en una regata real contra un amigo. Hecho para principiantes de club, actualizado al reglamento 2025-2028 con la nueva regla de espacio en baliza.",
+        },
+        fr: {
+          metaTitle: "Dinghy Lab — Simulateur de priorité en voile & jeu de régate à 2 (RCV 2025-2028)",
+          metaDesc: "Outils de voile gratuits : un simulateur interactif de priorité et un jeu de régate à deux joueurs, basés sur les Règles de Course à la Voile 2025-2028.",
+          heroEyebrow: "VOILE LÉGÈRE · RCV 2025-2028",
+          heroTitle: "Apprenez les priorités.<br />Puis défiez un ami en régate.",
+          heroLead: "Deux outils gratuits pour les véliplanchistes et dériveurs : un simulateur qui montre en couleur qui doit se maintenir à l'écart, et un jeu de régate à deux sur un seul clavier — basés sur les RCV 2025-2028 de World Sailing.",
+          heroCtaSim: "Ouvrir le simulateur",
+          heroCtaGame: "Jouer à la régate",
+          heroCardTitle: "Au programme",
+          heroCardSim: "Simulateur de priorité + quiz",
+          heroCardGame: "Régate à 2 avec pénalités",
+          heroCardNote: "Gratuit, sans inscription, fonctionne hors ligne en app installable.",
+          cardsEyebrow: "DEUX OUTILS, UN SITE",
+          cardsTitle: "Par où commencer ?",
+          cardsLead: "Apprenez d'abord les règles ou lancez-vous en régate — les deux utilisent le même moteur de règles.",
+          cardSimTitle: "Simulateur de priorité",
+          cardSimDesc: "Déplacez les bateaux et le vent : le bateau qui doit s'écarter devient rouge instantanément, avec la règle (RCV 10-13) et une explication simple. Mode navigation, antisèche de 3 secondes et quiz de 10 questions inclus.",
+          cardSimCta: "Commencer la simulation →",
+          cardGameTitle: "Jeu de régate à 2",
+          cardGameDesc: "Un clavier, deux barreurs. Séquence de départ avec pavillons, vent variable, passages de marques, priorités en direct et tours de pénalité — tout ce qu'exige une vraie régate.",
+          cardGameCta: "Commencer la régate →",
+          seoEyebrow: "POURQUOI LA PRIORITÉ COMPTE",
+          seoTitle: "Qui s'écarte ? La question à laquelle chaque régatier répond en quelques secondes.",
+          seoP1: "En dériveur, deux bateaux se croisent des dizaines de fois par course, et à chaque fois les Règles de Course à la Voile décident qui garde son cap et qui s'écarte. Bâbord amures cède à tribord (règle 10), le bateau au vent cède au bateau sous le vent (règle 11), celui de derrière cède à celui de devant (règle 12), et un bateau qui vire cède à tous (règle 13).",
+          seoP2: "Dinghy Lab rend ces règles visibles : déplacez les bateaux et regardez la décision changer, puis testez-vous dans une vraie régate contre un ami. Conçu pour les débutants de club, à jour du règlement 2025-2028 avec la nouvelle règle de place à la marque.",
+        },
+        de: {
+          metaTitle: "Dinghy Lab — Wegerecht-Simulator & Regatta-Spiel für 2 (WR 2025-2028)",
+          metaDesc: "Kostenlose Segel-Tools: ein interaktiver Wegerecht-Simulator und ein Regatta-Spiel für zwei Spieler, basierend auf den Wettfahrtregeln Segeln 2025-2028.",
+          heroEyebrow: "JOLLENSEGELN · WR 2025-2028",
+          heroTitle: "Lerne das Wegerecht.<br />Dann tritt gegen Freunde an.",
+          heroLead: "Zwei kostenlose Tools für Jollensegler: ein Simulator, der farbig zeigt, wer ausweichen muss, und ein Regatta-Spiel für zwei an einer Tastatur — beide basierend auf den World-Sailing-Wettfahrtregeln 2025-2028.",
+          heroCtaSim: "Simulator öffnen",
+          heroCtaGame: "Regatta spielen",
+          heroCardTitle: "Was dich erwartet",
+          heroCardSim: "Wegerecht-Simulator + Quiz",
+          heroCardGame: "2-Spieler-Regatta mit Strafen",
+          heroCardNote: "Kostenlos, ohne Anmeldung, offline nutzbar als installierbare App.",
+          cardsEyebrow: "ZWEI TOOLS, EINE SEITE",
+          cardsTitle: "Wo möchtest du anfangen?",
+          cardsLead: "Erst die Regeln lernen oder direkt in die Regatta — beide nutzen dieselbe Regel-Engine.",
+          cardSimTitle: "Wegerecht-Simulator",
+          cardSimDesc: "Ziehe zwei Boote und den Wind — das ausweichpflichtige Boot wird sofort rot markiert, mit Regel (WR 10-13) und verständlicher Begründung. Mit Segelmodus, 3-Sekunden-Spickzettel und 10-Fragen-Quiz.",
+          cardSimCta: "Simulation starten →",
+          cardGameTitle: "Regatta-Spiel für 2",
+          cardGameDesc: "Eine Tastatur, zwei Steuerleute. Startsequenz mit Flaggen, drehender Wind, Bahnmarken-Rundungen, Wegerecht in Echtzeit und Strafkringel — alles, was eine echte Jollenregatta verlangt.",
+          cardGameCta: "Regatta starten →",
+          seoEyebrow: "WARUM WEGERECHT ZÄHLT",
+          seoTitle: "Wer weicht aus? Die Frage, die jeder Segler in Sekunden beantworten muss.",
+          seoP1: "Beim Jollensegeln begegnen sich zwei Boote dutzende Male pro Wettfahrt — und jedes Mal entscheiden die Wettfahrtregeln, wer Kurs hält und wer ausweicht. Backbordbug weicht Steuerbordbug (Regel 10), Luv weicht Lee (Regel 11), das hintere Boot weicht dem vorderen (Regel 12), und ein wendendes Boot weicht allen (Regel 13).",
+          seoP2: "Dinghy Lab macht diese Regeln sichtbar: Bewege die Boote und sieh zu, wie sich die Entscheidung ändert — und teste dich dann im echten Rennen gegen Freunde. Gemacht für Vereins-Einsteiger, aktuell zum Regelwerk 2025-2028 inklusive der neuen Bahnmarken-Regel.",
+        },
+      };
+    </script>
+    <script src="i18n.js"></script>
+    <script src="ads.js"></script>
+    <script src="pwa.js"></script>
+  </body>
+</html>

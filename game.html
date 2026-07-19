@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>2-Player Dinghy Race Game — One Keyboard | Dinghy Lab (RRS 2025-2028)</title>
+    <meta
+      name="description"
+      content="Free two-player dinghy racing on one keyboard: start sequence with flags, shifting wind, mark roundings, live right-of-way calls and penalty turns."
+    />
+    <meta name="theme-color" content="#082c3c" />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Dinghy Lab" />
+    <meta property="og:title" content="2-Player Dinghy Race Game — One Keyboard" />
+    <meta property="og:description" content="Race a friend on one keyboard with real start flags, shifting wind and live right-of-way calls." />
+    <meta property="og:image" content="assets/hero-dinghy.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="assets/icons/icon-192.png" type="image/png" />
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
+    <link rel="preload" href="assets/hero-dinghy.png" as="image" />
+    <link rel="stylesheet" href="game.css" />
+    <link rel="stylesheet" href="hub.css" />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "VideoGame",
+      "name": "Dinghy Lab Race",
+      "description": "Free two-player dinghy racing game on one keyboard, based on the Racing Rules of Sailing 2025-2028",
+      "applicationCategory": "Game",
+      "operatingSystem": "Web Browser",
+      "playMode": "MultiPlayer",
+      "numberOfPlayers": 2,
+      "inLanguage": ["en", "ko", "es", "fr", "de"],
+      "isAccessibleForFree": true,
+      "genre": ["Sailing", "Racing", "Educational"]
+    }
+    </script>
+  </head>
+  <body class="page-game">
+    <header class="hub-header">
+      <a class="hub-brand" href="index.html"><span class="hub-brand-mark" aria-hidden="true">⛵</span><span>Dinghy Lab</span></a>
+      <nav class="hub-nav" aria-label="Main menu">
+        <a href="index.html" data-i18n="navHome">Home</a>
+        <a href="simulator.html" data-i18n="navSimulator">Rules Simulator</a>
+        <a href="game.html" class="active" data-i18n="navGame">Race Game</a>
+      </nav>
+      <div class="hub-actions">
+        <button class="ghost-button" id="pauseButton" type="button" data-i18n="gPause">Pause</button>
+        <button class="primary-button compact" id="newRaceButton" type="button" data-i18n="gNewRace">New race</button>
+        <select id="hubLang" class="hub-lang" aria-label="Language"></select>
+      </div>
+    </header>
+
+    <main id="game">
+      <section class="hero">
+        <div class="hero-image" aria-hidden="true"></div>
+        <div class="hero-overlay" aria-hidden="true"></div>
+        <div class="hero-inner">
+          <div class="hero-copy">
+            <p class="eyebrow" data-i18n="gHeroEyebrow">two player · racing rules · shifting wind</p>
+            <h1 data-i18n="gHeroTitle">Same wind, different choices.<br />Finish first.</h1>
+            <p class="hero-lede" data-i18n="gHeroLead">
+              A dinghy race for two on one keyboard: fight for position before the start, then tack, judge right of way,
+              round the marks and survive the penalties — all in one race.
+            </p>
+            <a class="primary-link" href="#raceArena" data-i18n="gHeroCta">Go to the race arena</a>
+          </div>
+          <aside class="hero-card">
+            <span data-i18n="gColorKey">Right-of-way colors</span>
+            <strong><i class="dot green"></i><span data-i18n="gColorGreen">Green: right-of-way boat</span></strong>
+            <strong><i class="dot red"></i><span data-i18n="gColorRed">Red: keep-clear boat</span></strong>
+            <strong><i class="dot amber"></i><span data-i18n="gColorAmber">Amber: tacking or penalty</span></strong>
+            <small data-i18n="gColorNote">RRS 10-13, 14, 28, 31 and 44, simplified for the game.</small>
+          </aside>
+        </div>
+      </section>
+
+      <section class="hub-ad-section" aria-label="Advertisement">
+        <span class="hub-ad-label" data-i18n="adLabel">ADVERTISEMENT</span>
+        <div class="hub-ad-slot" data-ad-position="game">
+          <strong data-i18n="adPlaceholder">Ad placement</strong>
+          <small data-i18n="adPlaceholderNote">Ads appear here automatically after AdSense approval.</small>
+        </div>
+      </section>
+
+      <section class="race-section" id="raceArena">
+        <div class="section-heading">
+          <p class="eyebrow dark" data-i18n="gArenaEyebrow">live race arena</p>
+          <h2 data-i18n="gArenaTitle">Real-time racing for two</h2>
+          <p data-i18n="gArenaLead">
+            You can steer before the race starts. Watch the start flags and countdown at the top right and fight for the best position.
+          </p>
+        </div>
+
+        <div class="race-layout">
+          <section class="canvas-card">
+            <div class="canvas-toolbar">
+              <div class="race-chip">
+                <span data-i18n="gChipCourse">Course</span>
+                <strong id="courseLabel">-</strong>
+              </div>
+              <div class="race-chip">
+                <span data-i18n="gChipTime">Race time</span>
+                <strong id="raceTime">00:00.0</strong>
+              </div>
+              <div class="race-chip wind-chip">
+                <span data-i18n="gChipWind">Wind</span>
+                <strong id="windReadout">000° · 10.0 kn</strong>
+              </div>
+              <div class="race-chip status-chip">
+                <span data-i18n="gChipStatus">Status</span>
+                <strong id="raceStatus">-</strong>
+              </div>
+            </div>
+
+            <div class="canvas-wrap">
+              <canvas id="raceCanvas" width="1440" height="860" aria-label="Two-player dinghy racing game"></canvas>
+
+              <aside class="signal-panel" id="signalPanel" aria-live="polite">
+                <div class="signal-head">
+                  <span>RC START SIGNAL</span>
+                  <strong id="signalCountdown">--:--</strong>
+                </div>
+                <div class="flag-row">
+                  <div class="flag class-flag" id="classFlag" aria-hidden="true"><span></span></div>
+                  <div class="flag prep-flag" id="prepFlag" aria-hidden="true"><span></span></div>
+                  <div>
+                    <b id="signalTitle"></b>
+                    <small id="signalDetail"></small>
+                  </div>
+                </div>
+              </aside>
+
+              <div class="center-message" id="centerMessage" hidden>
+                <span id="centerEyebrow">RACE SIGNAL</span>
+                <strong id="centerTitle">START</strong>
+                <p id="centerDetail"></p>
+              </div>
+            </div>
+
+            <div class="canvas-help">
+              <span data-i18n="gCanvasHelp1">Green boat currently holds right of way</span>
+              <span data-i18n="gCanvasHelp2">Dashed line points to the next mark</span>
+              <span data-i18n="gCanvasHelp3">All marks round counter-clockwise ↺</span>
+              <span data-i18n="gCanvasHelp4">You can steer before the start</span>
+              <span data-i18n="gCanvasHelp5">Esc: pause</span>
+            </div>
+          </section>
+
+          <aside class="dashboard">
+            <section class="decision-card" id="decisionCard">
+              <div class="card-kicker" data-i18n="gDecisionKicker">CURRENT RIGHT OF WAY</div>
+              <strong id="decisionWinner"></strong>
+              <span id="decisionRule"></span>
+              <p id="decisionReason"></p>
+            </section>
+
+            <section class="player-card player-a">
+              <div class="player-head">
+                <div>
+                  <span>PLAYER A</span>
+                  <strong>Coral</strong>
+                </div>
+                <b id="aPlace">-</b>
+              </div>
+              <div class="meter"><i id="aProgress"></i></div>
+              <dl>
+                <div><dt data-i18n="gNextTarget">Next target</dt><dd id="aTarget">START</dd></div>
+                <div><dt data-i18n="gSpeedTack">Speed / tack</dt><dd id="aState">0.0 kn</dd></div>
+                <div><dt data-i18n="gPenaltyLabel">Penalty</dt><dd id="aPenalty">-</dd></div>
+              </dl>
+              <div class="key-strip">
+                <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>
+                <span>TACK</span><kbd>Q</kbd><kbd>E</kbd>
+              </div>
+            </section>
+
+            <section class="player-card player-b">
+              <div class="player-head">
+                <div>
+                  <span>PLAYER B</span>
+                  <strong>Blue</strong>
+                </div>
+                <b id="bPlace">-</b>
+              </div>
+              <div class="meter"><i id="bProgress"></i></div>
+              <dl>
+                <div><dt data-i18n="gNextTarget">Next target</dt><dd id="bTarget">START</dd></div>
+                <div><dt data-i18n="gSpeedTack">Speed / tack</dt><dd id="bState">0.0 kn</dd></div>
+                <div><dt data-i18n="gPenaltyLabel">Penalty</dt><dd id="bPenalty">-</dd></div>
+              </dl>
+              <div class="key-strip">
+                <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd>
+                <span>TACK</span><kbd>N</kbd><kbd>M</kbd>
+              </div>
+            </section>
+
+            <section class="event-card">
+              <div class="event-head">
+                <strong data-i18n="gLogTitle">Race log</strong>
+                <button id="clearLogButton" type="button" data-i18n="gLogClear">Clear</button>
+              </div>
+              <ol id="eventLog"></ol>
+            </section>
+          </aside>
+        </div>
+      </section>
+
+      <section class="info-section" id="controls">
+        <div class="section-heading">
+          <p class="eyebrow dark" data-i18n="gControlsEyebrow">keyboard controls</p>
+          <h2 data-i18n="gControlsTitle">One keyboard, two helms</h2>
+        </div>
+        <div class="control-grid">
+          <article>
+            <span class="player-pill a">A</span>
+            <h3 data-i18n="gPlayerA">Player A</h3>
+            <p data-i18n="gCtrlTrimA"><kbd>W</kbd> trim in · <kbd>S</kbd> ease out</p>
+            <p data-i18n="gCtrlSteerA"><kbd>A</kbd>/<kbd>D</kbd> steer left/right</p>
+            <p data-i18n="gCtrlTackA"><kbd>Q</kbd>/<kbd>E</kbd> tack left/right</p>
+          </article>
+          <article>
+            <span class="player-pill b">B</span>
+            <h3 data-i18n="gPlayerB">Player B</h3>
+            <p data-i18n="gCtrlTrimB"><kbd>↑</kbd> trim in · <kbd>↓</kbd> ease out</p>
+            <p data-i18n="gCtrlSteerB"><kbd>←</kbd>/<kbd>→</kbd> steer left/right</p>
+            <p data-i18n="gCtrlTackB"><kbd>N</kbd>/<kbd>M</kbd> tack left/right</p>
+          </article>
+          <article>
+            <span class="player-pill neutral">TIP</span>
+            <h3 data-i18n="gTipTitle">Reading the wind</h3>
+            <p data-i18n="gTip1">The arrows show where the wind blows from.</p>
+            <p data-i18n="gTip2">Within 38° of head-to-wind you are in the no-go zone and lose speed fast.</p>
+            <p data-i18n="gTip3">The wind keeps shifting up to 30° around its base direction.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="guide-section" id="guide">
+        <div class="section-heading">
+          <p class="eyebrow dark" data-i18n="gGuideEyebrow">sailing strategy guide</p>
+          <h2 data-i18n="gGuideTitle">Three things to know before your first race</h2>
+          <p data-i18n="gGuideLead">Start position, wind shifts and right-of-way calls matter as much as raw speed.</p>
+        </div>
+        <div class="guide-grid">
+          <article>
+            <span>01</span>
+            <h3 data-i18n="gGuide1T">Don't cross the start line early</h3>
+            <p data-i18n="gGuide1P">
+              Build speed below the line during the countdown and cross northward right after the START signal.
+              Crossing early means OCS — you must return below the line.
+            </p>
+          </article>
+          <article>
+            <span>02</span>
+            <h3 data-i18n="gGuide2T">Avoid the no-go zone and trim your sail</h3>
+            <p data-i18n="gGuide2P">
+              Pointing straight into the wind kills your speed. Sail about 45° close-hauled with the sail in,
+              and ease it out when heading downwind.
+            </p>
+          </article>
+          <article>
+            <span>03</span>
+            <h3 data-i18n="gGuide3T">Round marks wide, counter-clockwise</h3>
+            <p data-i18n="gGuide3P">
+              Every mark must be rounded counter-clockwise following the ↺ arrow. Hitting a mark costs a one-turn
+              penalty, so enter wide and smooth.
+            </p>
+          </article>
+        </div>
+
+        <div class="faq-block">
+          <div class="section-heading compact-heading">
+            <p class="eyebrow dark" data-i18n="gFaqEyebrow">frequently asked questions</p>
+            <h2 data-i18n="gFaqTitle">FAQ</h2>
+          </div>
+          <div class="faq-list">
+            <details>
+              <summary data-i18n="gFaq1Q">Can I play without installing anything?</summary>
+              <p data-i18n="gFaq1A">Yes. Open the page in a desktop browser like Chrome, Edge or Firefox and play immediately.</p>
+            </details>
+            <details>
+              <summary data-i18n="gFaq2Q">Why do the boat colors change during the race?</summary>
+              <p data-i18n="gFaq2A">When the boats get close, green marks the right-of-way boat and red the boat that must keep clear.</p>
+            </details>
+            <details>
+              <summary data-i18n="gFaq3Q">Is this exactly the same as real racing rules?</summary>
+              <p data-i18n="gFaq3A">It is a simplification for learning and gameplay. In real races, always check the current RRS and sailing instructions.</p>
+            </details>
+            <details>
+              <summary data-i18n="gFaq4Q">Can I play on mobile?</summary>
+              <p data-i18n="gFaq4A">The game is optimized for two players on one keyboard. Touch controls may come later.</p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <section class="rules-section" id="rules">
+        <div class="section-heading">
+          <p class="eyebrow dark" data-i18n="gRulesEyebrow">simplified racing rules</p>
+          <h2 data-i18n="gRulesTitle">Rules applied in the game</h2>
+        </div>
+        <div class="rule-grid">
+          <article><span>RRS 10</span><h3 data-i18n="gRule10T">Opposite tacks</h3><p data-i18n="gRule10P">Port tack keeps clear of starboard tack.</p></article>
+          <article><span>RRS 11</span><h3 data-i18n="gRule11T">Same tack, overlapped</h3><p data-i18n="gRule11P">The windward boat keeps clear of the leeward boat.</p></article>
+          <article><span>RRS 12</span><h3 data-i18n="gRule12T">Same tack, not overlapped</h3><p data-i18n="gRule12P">The boat behind keeps clear of the boat ahead.</p></article>
+          <article><span>RRS 13</span><h3 data-i18n="gRule13T">While tacking</h3><p data-i18n="gRule13P">A tacking boat keeps clear of the others.</p></article>
+          <article><span>RRS 14 / 31 / 44</span><h3 data-i18n="gRule14T">Contact & penalties</h3><p data-i18n="gRule14P">Boat contact costs two penalty turns; touching the RC, pin or a mark costs one turn.</p></article>
+        </div>
+        <p class="scope-note" data-i18n="gScope">
+          This game is an educational simplification. In real racing, serious damage or advantage may not be exonerated
+          by turns, and sailing instructions may change the penalties.
+        </p>
+      </section>
+    </main>
+
+    <footer class="hub-footer">
+      <p data-i18n="footerLine"></p>
+      <nav class="hub-footer-links" aria-label="Site info">
+        <a href="about.html" data-i18n="footerAbout">About</a>
+        <a href="privacy.html" data-i18n="footerPrivacy">Privacy</a>
+        <a href="terms.html" data-i18n="footerTerms">Terms</a>
+        <button id="hubConsentSettings" type="button" data-i18n="footerConsent">Privacy settings</button>
+        <a href="https://www.sailing.org/inside-worldsailing/rules-regulations/racingrules/" target="_blank" rel="noreferrer">World Sailing RRS</a>
+      </nav>
+    </footer>
+
+    <aside class="hub-consent" id="hubConsent" hidden aria-labelledby="hubConsentTitle">
+      <div>
+        <strong id="hubConsentTitle" data-i18n="consentTitle">Ads & analytics</strong>
+        <p><span data-i18n="consentBody"></span> <a href="privacy.html" data-i18n="consentMore">Learn more</a></p>
+      </div>
+      <div class="hub-consent-actions">
+        <button class="hub-consent-reject" id="hubConsentReject" type="button" data-i18n="consentReject">Decline optional</button>
+        <button class="hub-consent-accept" id="hubConsentAccept" type="button" data-i18n="consentAccept">Accept and continue</button>
+      </div>
+    </aside>
+
+    <div class="setup-overlay" id="setupOverlay">
+      <form class="setup-modal" id="setupForm">
+        <p class="eyebrow dark" data-i18n="gSetupEyebrow">new race</p>
+        <h2 data-i18n="gSetupTitle">Race setup</h2>
+        <p class="setup-lead" data-i18n="gSetupLead">Pre-start steering and the countdown begin as soon as you press start.</p>
+
+        <fieldset>
+          <legend data-i18n="gCourseLegend">Choose a course</legend>
+          <div class="option-grid">
+            <label class="option-card">
+              <input type="radio" name="course" value="windward" checked />
+              <span class="course-icon">↕</span>
+              <strong data-i18n="gCourseWindward">Windward-leeward</strong>
+              <small data-i18n="gCourseWindwardSub">START → windward → leeward → FINISH</small>
+            </label>
+            <label class="option-card">
+              <input type="radio" name="course" value="triangle" />
+              <span class="course-icon">△</span>
+              <strong data-i18n="gCourseTriangle">Triangle</strong>
+              <small data-i18n="gCourseTriangleSub">START → windward → reach → leeward → FINISH</small>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend data-i18n="gSeqLegend">Start sequence</legend>
+          <div class="sequence-options">
+            <label>
+              <input type="radio" name="sequence" value="60" checked />
+              <span><strong data-i18n="gSeq1">1-minute practice</strong><small data-i18n="gSeq1Sub">Compressed flag sequence in 60 seconds</small></span>
+            </label>
+            <label>
+              <input type="radio" name="sequence" value="300" />
+              <span><strong data-i18n="gSeq5">5-minute official</strong><small data-i18n="gSeq5Sub">5-min · 4-min · 1-min · start signal</small></span>
+            </label>
+          </div>
+        </fieldset>
+
+        <div class="setup-note">
+          A: <b>WASD + Q/E</b>
+          <span></span>
+          B: <b>Arrows + N/M</b>
+        </div>
+        <button class="primary-button setup-start" type="submit" data-i18n="gSetupStart">Start pre-start</button>
+      </form>
+    </div>
+
+    <script src="site-config.js"></script>
+    <script src="game-i18n.js"></script>
+    <script src="i18n.js"></script>
+    <script src="ads.js"></script>
+    <script src="pwa.js"></script>
+    <script src="game.js"></script>
+  </body>
+</html>

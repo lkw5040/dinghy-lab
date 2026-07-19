@@ -1,0 +1,241 @@
+/* ============================================================
+   Dinghy Lab — shared chrome (header / footer / language /
+   consent banner / ad shells / home cards)
+   Loaded AFTER the page stylesheet on every page.
+   ============================================================ */
+
+:root {
+  --hub-navy: #082c3c;
+  --hub-navy-2: #0d3d52;
+  --hub-teal: #0e7490;
+  --hub-amber: #f0b84e;
+  --hub-line: rgba(8, 44, 60, 0.14);
+  --hub-muted: #55707c;
+}
+
+/* ─────────── Header ─────────── */
+.hub-header {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px clamp(14px, 4vw, 36px);
+  background: rgba(8, 44, 60, 0.95);
+  backdrop-filter: blur(8px);
+  color: #fff;
+}
+.hub-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #fff !important;
+  text-decoration: none;
+  font-weight: 900;
+  font-size: 1.02rem;
+  white-space: nowrap;
+}
+.hub-brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--hub-amber);
+  color: #082c3c;
+  font-size: 1.05rem;
+}
+.hub-nav {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+.hub-nav a {
+  color: rgba(255, 255, 255, 0.82) !important;
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 0.88rem;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+.hub-nav a:hover { background: rgba(255, 255, 255, 0.13); color: #fff !important; }
+.hub-nav a.active { background: rgba(240, 184, 78, 0.18); color: #ffd97a !important; }
+.hub-actions { display: flex; gap: 8px; align-items: center; }
+.hub-lang {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23ffffff' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.8rem;
+  font-family: inherit;
+  padding: 7px 28px 7px 12px;
+  cursor: pointer;
+}
+.hub-lang:hover { background-color: rgba(255, 255, 255, 0.12); }
+.hub-lang option { color: #12303a; background: #fff; }
+.hub-install {
+  border: none;
+  background: #fff;
+  color: var(--hub-navy);
+  font-weight: 800;
+  font-size: 0.8rem;
+  font-family: inherit;
+  padding: 8px 13px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.hub-install:hover { background: #e6f6fa; }
+
+/* game page: its hero reserved space for the old fixed header */
+body.page-game .hero { padding-top: 0; }
+body.page-game main { min-width: 0; }
+
+/* ─────────── Footer ─────────── */
+.hub-footer {
+  background: var(--hub-navy);
+  color: rgba(255, 255, 255, 0.75);
+  padding: 26px clamp(14px, 4vw, 36px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+}
+.hub-footer p { margin: 0; }
+.hub-footer-links { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+.hub-footer-links a {
+  color: rgba(255, 255, 255, 0.88) !important;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.hub-footer-links a:hover { text-decoration: underline; }
+.hub-footer-links button {
+  background: transparent;
+  border: 0;
+  color: rgba(255, 255, 255, 0.88);
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 0;
+}
+.hub-footer-links button:hover { text-decoration: underline; }
+
+/* ─────────── Ad shells ─────────── */
+.hub-ad-section {
+  margin: 0 auto;
+  max-width: 1120px;
+  padding: 18px clamp(14px, 4vw, 36px);
+  text-align: center;
+}
+.hub-ad-section[hidden] { display: none; }
+.hub-ad-label {
+  color: #829397;
+  display: block;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  margin-bottom: 6px;
+}
+.hub-ad-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  max-width: 970px;
+  min-height: 110px;
+  overflow: hidden;
+  padding: 18px;
+  border: 1px dashed #b7ced1;
+  border-radius: 10px;
+  background: repeating-linear-gradient(-45deg, #f6fbfb, #f6fbfb 10px, #eef7f7 10px, #eef7f7 20px);
+  color: var(--hub-muted);
+}
+.hub-ad-slot strong { color: #547076; font-size: 13px; }
+.hub-ad-slot small { font-size: 11px; margin-top: 5px; }
+.hub-ad-slot.ad-active { background: transparent; border-style: solid; padding: 0; display: block; }
+.hub-ad-slot.ad-active strong, .hub-ad-slot.ad-active small { display: none; }
+
+/* ─────────── Consent banner ─────────── */
+.hub-consent {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  display: flex;
+  gap: 22px;
+  align-items: center;
+  justify-content: space-between;
+  width: calc(100% - 36px);
+  max-width: 980px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid var(--hub-line);
+  border-radius: 12px;
+  box-shadow: 0 22px 70px rgba(5, 39, 46, 0.28);
+  color: #12303a;
+}
+.hub-consent[hidden] { display: none; }
+.hub-consent strong { display: block; margin-bottom: 5px; }
+.hub-consent p { color: var(--hub-muted); font-size: 12px; line-height: 1.5; margin: 0; }
+.hub-consent a { color: var(--hub-teal); font-weight: 800; text-decoration: underline; }
+.hub-consent-actions { display: flex; flex: 0 0 auto; gap: 8px; }
+.hub-consent-actions button {
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 900;
+  font-size: 0.85rem;
+  min-height: 40px;
+  padding: 0 15px;
+}
+.hub-consent-accept { background: var(--hub-navy); border: 1px solid var(--hub-navy); color: #fff; }
+.hub-consent-accept:hover { background: var(--hub-navy-2); }
+.hub-consent-reject { background: #fff; border: 1px solid var(--hub-line); color: var(--hub-navy); }
+
+/* ─────────── Home feature cards ─────────── */
+.hub-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 18px;
+}
+.hub-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(8, 44, 60, 0.1);
+  padding: 26px;
+  text-decoration: none;
+  color: #12303a !important;
+  border: 2px solid transparent;
+  transition: transform 0.14s ease, border-color 0.14s ease;
+}
+.hub-card:hover { transform: translateY(-3px); border-color: var(--hub-teal); }
+.hub-card-icon { font-size: 2rem; }
+.hub-card h3 { margin: 0; font-size: 1.2rem; }
+.hub-card p { margin: 0; color: var(--hub-muted); font-size: 0.92rem; flex: 1; }
+.hub-card-cta { color: var(--hub-teal); font-weight: 900; font-size: 0.92rem; }
+.hub-card ul { margin: 0; padding-left: 18px; color: var(--hub-muted); font-size: 0.88rem; }
+
+/* ─────────── Responsive ─────────── */
+@media (max-width: 760px) {
+  .hub-nav { order: 3; width: 100%; margin-left: 0; }
+  .hub-nav a { flex: 1; text-align: center; padding: 8px 4px; }
+  .hub-actions { margin-left: auto; }
+  .hub-consent { flex-direction: column; align-items: stretch; }
+  .hub-consent-actions { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+  .hub-footer { flex-direction: column; align-items: flex-start; }
+}

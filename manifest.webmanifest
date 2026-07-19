@@ -1,0 +1,18 @@
+{
+  "name": "Dinghy Lab — Sailing Rules & Racing",
+  "short_name": "Dinghy Lab",
+  "description": "Right-of-way simulator and 2-player dinghy race game based on the Racing Rules of Sailing 2025-2028",
+  "lang": "en",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#082c3c",
+  "theme_color": "#082c3c",
+  "categories": ["education", "sports", "games"],
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "assets/icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

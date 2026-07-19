@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Right-of-Way Simulator — Who Keeps Clear? | Dinghy Lab (RRS 2025-2028)</title>
+    <meta
+      name="description"
+      content="Drag two dinghies and the wind: the keep-clear boat turns red instantly with the rule (RRS 10-13) and the reason. Sail-along mode, cheat sheet and quiz included."
+    />
+    <meta name="theme-color" content="#082c3c" />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Dinghy Lab" />
+    <meta property="og:title" content="Right-of-Way Simulator — Who Keeps Clear?" />
+    <meta property="og:description" content="Move the boats and the right of way lights up instantly. Based on the Racing Rules of Sailing 2025-2028." />
+    <meta property="og:image" content="assets/hero-dinghy.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="assets/icons/icon-192.png" type="image/png" />
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
+    <link rel="stylesheet" href="sim.css" />
+    <link rel="stylesheet" href="hub.css" />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Dinghy Lab Right-of-Way Simulator",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Web",
+      "inLanguage": ["en", "ko", "es", "fr", "de"],
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "description": "Interactive right-of-way simulator for dinghy sailing based on the Racing Rules of Sailing 2025-2028"
+    }
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#simulator" data-i18n="skip">Skip to simulator</a>
+
+    <header class="hub-header">
+      <a class="hub-brand" href="index.html"><span class="hub-brand-mark" aria-hidden="true">⛵</span><span>Dinghy Lab</span></a>
+      <nav class="hub-nav" aria-label="Main menu">
+        <a href="index.html" data-i18n="navHome">Home</a>
+        <a href="simulator.html" class="active" data-i18n="navSimulator">Rules Simulator</a>
+        <a href="game.html" data-i18n="navGame">Race Game</a>
+      </nav>
+      <div class="hub-actions">
+        <button type="button" id="installApp" class="hub-install" hidden data-i18n="installApp">📱 Install app</button>
+        <select id="hubLang" class="hub-lang" aria-label="Language"></select>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="hero-inner">
+          <div class="hero-copy">
+            <p class="eyebrow" data-i18n="heroEyebrow">DINGHY SAILING · RRS 2025-2028</p>
+            <h1 data-i18n="heroTitle">Who must keep clear?<br />Move the boats and see instantly.</h1>
+            <p class="hero-lede" data-i18n="heroLead">
+              Port/starboard, windward/leeward, tacking… a free simulator that decides right of way in color.
+              Based on the World Sailing Racing Rules of Sailing 2025-2028.
+            </p>
+            <div class="hero-buttons">
+              <a class="btn btn-primary" href="#simulator" data-i18n="heroCta">Open the simulator</a>
+              <a class="btn btn-ghost" href="#quiz" data-i18n="heroQuizCta">Take the quiz</a>
+            </div>
+          </div>
+          <aside class="hero-card" aria-label="Color key">
+            <p class="hero-card-title" data-i18n="colorPromise">Color key</p>
+            <p class="color-line"><span class="dot green"></span><strong data-i18n="greenMeaning">Green = right of way (hold course)</strong></p>
+            <p class="color-line"><span class="dot red"></span><strong data-i18n="redMeaning">Red = keep clear</strong></p>
+            <p class="hero-card-note" data-i18n="heroScope">Simplified for learning: the basic situations of Rules 10-18.</p>
+          </aside>
+        </div>
+        <div class="hero-wave" aria-hidden="true"></div>
+      </section>
+
+      <section class="sim-band" id="simulator">
+        <div class="section-inner">
+          <div class="section-heading">
+            <p class="eyebrow" data-i18n="simEyebrow">INTERACTIVE SIMULATOR</p>
+            <h2 data-i18n="simTitle">Right-of-way simulator</h2>
+            <p data-i18n="simLead">Drag a hull to move it, drag the ⟳ bow handle to rotate. Press ▶ Sail and the boats move while the decision updates live.</p>
+          </div>
+
+          <div class="verdict-banner" id="verdictBanner" aria-live="polite">
+            <div class="verdict-side" id="verdictA">
+              <span class="verdict-boat">A</span>
+              <span class="verdict-word" id="verdictWordA"></span>
+            </div>
+            <div class="verdict-center">
+              <span class="verdict-rule" id="verdictRule">RRS 10</span>
+              <p class="verdict-reason" id="verdictReason"></p>
+            </div>
+            <div class="verdict-side" id="verdictB">
+              <span class="verdict-boat">B</span>
+              <span class="verdict-word" id="verdictWordB"></span>
+            </div>
+          </div>
+
+          <div class="preset-row" role="group" aria-label="Scenario presets">
+            <button type="button" data-preset="opposite" class="active" data-i18n="presetOpposite">Port vs starboard</button>
+            <button type="button" data-preset="leeward" data-i18n="presetLeeward">Windward/leeward</button>
+            <button type="button" data-preset="clear" data-i18n="presetClear">Clear ahead</button>
+            <button type="button" data-preset="tacking" data-i18n="presetTacking">Tacking</button>
+            <button type="button" data-preset="downwind" data-i18n="presetDownwind">Running downwind</button>
+            <button type="button" data-preset="mark" data-i18n="presetMark">Mark approach</button>
+          </div>
+
+          <div class="sim-layout">
+            <section class="canvas-card">
+              <div class="canvas-wrap">
+                <canvas id="seaCanvas" aria-label="Dinghy right-of-way simulator canvas"></canvas>
+                <button type="button" class="sail-toggle" id="sailToggle" aria-pressed="false">
+                  <span id="sailToggleIcon">▶</span> <span id="sailToggleLabel" data-i18n="sailPlay">Sail</span>
+                </button>
+              </div>
+              <div class="canvas-help">
+                <span data-i18n="dragHelp">🖐 Drag hull = move · ⟳ bow handle = rotate</span>
+                <span data-i18n="markHelp">🟡 Yellow circle = 3-boat-length zone</span>
+              </div>
+            </section>
+
+            <aside class="control-card">
+              <section class="ctrl-block wind-block">
+                <div class="ctrl-head">
+                  <h3 data-i18n="windControlTitle">Wind</h3>
+                  <strong id="windValue">0°</strong>
+                </div>
+                <div class="dial" id="windDial" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="359" aria-valuenow="0" aria-label="Wind direction">
+                  <div class="dial-ring"><div class="dial-pointer"></div></div>
+                  <span class="dial-n">N</span>
+                </div>
+                <div class="quick-spin">
+                  <button type="button" data-adjust="wind" data-delta="-15">−15°</button>
+                  <button type="button" data-adjust="wind" data-delta="-5">−5°</button>
+                  <button type="button" data-adjust="wind" data-delta="5">+5°</button>
+                  <button type="button" data-adjust="wind" data-delta="15">+15°</button>
+                </div>
+              </section>
+
+              <section class="ctrl-block boat-block boat-a">
+                <div class="ctrl-head">
+                  <h3><span class="boat-chip chip-a">A</span> <span data-i18n="boatA">Boat A</span></h3>
+                  <strong id="headingAValue">315°</strong>
+                </div>
+                <p class="boat-state" id="stateA"></p>
+                <div class="quick-spin">
+                  <button type="button" data-adjust="A" data-delta="-15">↺ 15°</button>
+                  <button type="button" data-adjust="A" data-delta="-5">↺ 5°</button>
+                  <button type="button" data-adjust="A" data-delta="5">5° ↻</button>
+                  <button type="button" data-adjust="A" data-delta="15">15° ↻</button>
+                </div>
+                <div class="boat-actions">
+                  <button type="button" class="tack-button" data-tack="A" id="tackButtonA" data-i18n="doTack">⤴ Tack now</button>
+                  <label class="check-line"><input id="tackingA" type="checkbox" /> <span data-i18n="holdTacking">Hold tacking state</span></label>
+                </div>
+              </section>
+
+              <section class="ctrl-block boat-block boat-b">
+                <div class="ctrl-head">
+                  <h3><span class="boat-chip chip-b">B</span> <span data-i18n="boatB">Boat B</span></h3>
+                  <strong id="headingBValue">45°</strong>
+                </div>
+                <p class="boat-state" id="stateB"></p>
+                <div class="quick-spin">
+                  <button type="button" data-adjust="B" data-delta="-15">↺ 15°</button>
+                  <button type="button" data-adjust="B" data-delta="-5">↺ 5°</button>
+                  <button type="button" data-adjust="B" data-delta="5">5° ↻</button>
+                  <button type="button" data-adjust="B" data-delta="15">15° ↻</button>
+                </div>
+                <div class="boat-actions">
+                  <button type="button" class="tack-button" data-tack="B" id="tackButtonB" data-i18n="doTack">⤴ Tack now</button>
+                  <label class="check-line"><input id="tackingB" type="checkbox" /> <span data-i18n="holdTacking">Hold tacking state</span></label>
+                </div>
+              </section>
+
+              <section class="ctrl-block mark-block">
+                <div class="ctrl-head"><h3 data-i18n="markControlTitle">Mark</h3></div>
+                <label class="check-line"><input id="markEnabled" type="checkbox" /> <span data-i18n="showMark">Show mark & 3-length zone</span></label>
+                <p class="mark-note-inline" data-i18n="markInlineNote">RRS 18 (2025-2028): if boats reach the zone not overlapped, the first boat to reach it gets mark-room.</p>
+              </section>
+            </aside>
+          </div>
+
+          <div class="reason-card">
+            <div class="reason-main">
+              <p class="eyebrow" data-i18n="whyEyebrow">DECISION DETAILS</p>
+              <h3 data-i18n="whyTitle">Why this decision?</h3>
+              <p id="longReasonText"></p>
+            </div>
+            <ul id="reasonList"></ul>
+            <div class="obligation-block">
+              <h4 data-i18n="limitsTitle">Limitations also in play</h4>
+              <ul id="obligationList"></ul>
+            </div>
+            <p id="markReason" class="mark-reason" hidden></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="cheat-band" id="cheat">
+        <div class="section-inner">
+          <div class="section-heading">
+            <p class="eyebrow" data-i18n="cheatEyebrow">3-SECOND CHEAT SHEET</p>
+            <h2 data-i18n="cheatTitle">Decide in 3 seconds on the water</h2>
+            <p data-i18n="cheatLead">Ask just three questions, in this order. It settles most situations.</p>
+          </div>
+          <ol class="cheat-steps">
+            <li class="cheat-step">
+              <span class="cheat-no">1</span>
+              <div>
+                <h3 data-i18n="cheat1Q">Are the boats on different tacks?</h3>
+                <p data-i18n="cheat1A"><strong>Port tack keeps clear.</strong> (RRS 10)</p>
+              </div>
+            </li>
+            <li class="cheat-arrow" aria-hidden="true"><span data-i18n="cheatNo">No, same tack ↓</span></li>
+            <li class="cheat-step">
+              <span class="cheat-no">2</span>
+              <div>
+                <h3 data-i18n="cheat2Q">Are they overlapped side by side?</h3>
+                <p data-i18n="cheat2A"><strong>The windward boat keeps clear.</strong> (RRS 11)</p>
+              </div>
+            </li>
+            <li class="cheat-arrow" aria-hidden="true"><span data-i18n="cheatNo2">No, not overlapped ↓</span></li>
+            <li class="cheat-step">
+              <span class="cheat-no">3</span>
+              <div>
+                <h3 data-i18n="cheat3Q">Then they are bow to stern.</h3>
+                <p data-i18n="cheat3A"><strong>The boat behind keeps clear.</strong> (RRS 12)</p>
+              </div>
+            </li>
+          </ol>
+          <div class="cheat-exceptions">
+            <article><span>⚠️</span><h4 data-i18n="cheatEx1T">If a boat is tacking</h4><p data-i18n="cheatEx1P">The tacking boat keeps clear — always. (RRS 13)</p></article>
+            <article><span>🟡</span><h4 data-i18n="cheatEx2T">Near a mark</h4><p data-i18n="cheatEx2P">Inside the 3-length zone, mark-room rules apply on top. (RRS 18)</p></article>
+            <article><span>🤝</span><h4 data-i18n="cheatEx3T">Even with right of way</h4><p data-i18n="cheatEx3P">Everyone must avoid contact. (RRS 14-16)</p></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="hub-ad-section" aria-label="Advertisement">
+        <span class="hub-ad-label" data-i18n="adLabel">ADVERTISEMENT</span>
+        <div class="hub-ad-slot" data-ad-position="simulator">
+          <strong data-i18n="adPlaceholder">Ad placement</strong>
+          <small data-i18n="adPlaceholderNote">Ads appear here automatically after AdSense approval.</small>
+        </div>
+      </section>
+
+      <section class="quiz-band" id="quiz">
+        <div class="section-inner">
+          <div class="section-heading">
+            <p class="eyebrow" data-i18n="quizEyebrow">RULES QUIZ</p>
+            <h2 data-i18n="quizTitle">Right-of-way quiz</h2>
+            <p data-i18n="quizLead">Look at the picture and pick the boat that must keep clear. 10 questions.</p>
+          </div>
+
+          <div class="quiz-shell" id="quizShell">
+            <div class="quiz-start" id="quizStart">
+              <p data-i18n="quizIntro">Questions are judged by the same engine as the simulator. Check the wind arrow first!</p>
+              <button type="button" class="btn btn-primary" id="quizStartButton" data-i18n="quizStartButton">Start quiz</button>
+              <p class="quiz-best" id="quizBest" hidden></p>
+            </div>
+
+            <div class="quiz-play" id="quizPlay" hidden>
+              <div class="quiz-meta">
+                <span id="quizProgress">1 / 10</span>
+                <span id="quizScore" class="quiz-score"></span>
+              </div>
+              <div class="quiz-canvas-wrap">
+                <canvas id="quizCanvas" aria-label="Quiz scenario"></canvas>
+              </div>
+              <p class="quiz-question" id="quizQuestion" data-i18n="quizQuestion">Which boat must keep clear?</p>
+              <div class="quiz-choices">
+                <button type="button" class="quiz-choice choice-a" data-choice="A"><span>A</span><span data-i18n="quizKeepClearChoice">must keep clear</span></button>
+                <button type="button" class="quiz-choice choice-b" data-choice="B"><span>B</span><span data-i18n="quizKeepClearChoice">must keep clear</span></button>
+              </div>
+              <div class="quiz-feedback" id="quizFeedback" hidden>
+                <strong id="quizFeedbackTitle"></strong>
+                <p id="quizFeedbackText"></p>
+                <button type="button" class="btn btn-primary" id="quizNextButton" data-i18n="quizNext">Next question</button>
+              </div>
+            </div>
+
+            <div class="quiz-result" id="quizResult" hidden>
+              <p class="quiz-result-score" id="quizResultScore">10 / 10</p>
+              <p id="quizResultMessage"></p>
+              <button type="button" class="btn btn-primary" id="quizRetryButton" data-i18n="quizRetry">Try again</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="rules-band" id="rules">
+        <div class="section-inner">
+          <div class="section-heading">
+            <p class="eyebrow" data-i18n="rulesEyebrow">RULES 10-18 · RRS 2025-2028</p>
+            <h2 data-i18n="rulesTitle">The rules this tool covers</h2>
+            <p data-i18n="rulesLead">Simplified from Part 2 of the World Sailing Racing Rules of Sailing 2025-2028.</p>
+          </div>
+          <div class="rule-grid">
+            <article><span>RRS 10</span><h3 data-i18n="rule10Title">Opposite tacks</h3><p data-i18n="rule10Text">A port-tack boat shall keep clear of a starboard-tack boat.</p></article>
+            <article><span>RRS 11</span><h3 data-i18n="rule11Title">Same tack, overlapped</h3><p data-i18n="rule11Text">A windward boat shall keep clear of a leeward boat.</p></article>
+            <article><span>RRS 12</span><h3 data-i18n="rule12Title">Same tack, not overlapped</h3><p data-i18n="rule12Text">A boat clear astern shall keep clear of a boat clear ahead.</p></article>
+            <article><span>RRS 13</span><h3 data-i18n="rule13Title">While tacking</h3><p data-i18n="rule13Text">After passing head to wind, a boat shall keep clear until she is close-hauled.</p></article>
+            <article><span>RRS 14</span><h3 data-i18n="rule14Title">Avoiding contact</h3><p data-i18n="rule14Text">Every boat shall avoid contact if reasonably possible.</p></article>
+            <article><span>RRS 15</span><h3 data-i18n="rule15Title">Acquiring right of way</h3><p data-i18n="rule15Text">A boat acquiring right of way shall initially give the other boat room to keep clear.</p></article>
+            <article><span>RRS 16</span><h3 data-i18n="rule16Title">Changing course</h3><p data-i18n="rule16Text">A right-of-way boat changing course shall give the other boat room to keep clear.</p></article>
+            <article><span>RRS 17</span><h3 data-i18n="rule17Title">Proper course</h3><p data-i18n="rule17Text">A boat with a leeward overlap from clear astern shall not sail above her proper course.</p></article>
+            <article><span>RRS 18</span><h3 data-i18n="rule18Title">Mark-room (2025 update)</h3><p data-i18n="rule18Text">Overlapped at the zone: outside gives inside mark-room. Not overlapped: first to the zone gets it.</p></article>
+          </div>
+          <p class="scope-note" data-i18n="scopeNote">
+            Out of scope: complete mark-room decisions, obstructions, room to tack (Rules 19-20), starting situations, team racing.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="hub-footer">
+      <p data-i18n="footerLine"></p>
+      <nav class="hub-footer-links" aria-label="Site info">
+        <a href="about.html" data-i18n="footerAbout">About</a>
+        <a href="privacy.html" data-i18n="footerPrivacy">Privacy</a>
+        <a href="terms.html" data-i18n="footerTerms">Terms</a>
+        <button id="hubConsentSettings" type="button" data-i18n="footerConsent">Privacy settings</button>
+        <a href="https://www.sailing.org/inside-worldsailing/rules-regulations/racingrules/" target="_blank" rel="noreferrer">World Sailing RRS</a>
+      </nav>
+    </footer>
+
+    <aside class="hub-consent" id="hubConsent" hidden aria-labelledby="hubConsentTitle">
+      <div>
+        <strong id="hubConsentTitle" data-i18n="consentTitle">Ads & analytics</strong>
+        <p><span data-i18n="consentBody"></span> <a href="privacy.html" data-i18n="consentMore">Learn more</a></p>
+      </div>
+      <div class="hub-consent-actions">
+        <button class="hub-consent-reject" id="hubConsentReject" type="button" data-i18n="consentReject">Decline optional</button>
+        <button class="hub-consent-accept" id="hubConsentAccept" type="button" data-i18n="consentAccept">Accept and continue</button>
+      </div>
+    </aside>
+
+    <script src="site-config.js"></script>
+    <script src="simulator-i18n.js"></script>
+    <script src="i18n.js"></script>
+    <script src="ads.js"></script>
+    <script src="pwa.js"></script>
+    <script src="simulator.js"></script>
+  </body>
+</html>
