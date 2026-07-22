@@ -88,8 +88,6 @@ function markName(mark) { return t(mark.key); }
 function courseName(courseKey) { return t(courses[courseKey].nameKey); }
 function tackLabel(tack) { return tack === "starboard" ? t("gStarboard") : t("gPort"); }
 
-const SHORE_W = 58;            // visible beach band on the left (wild mode)
-
 const game = {
   configured: false,
   paused: true,
@@ -97,6 +95,7 @@ const game = {
   courseKey: "windward",
   sequenceLength: 60,
   weatherMode: "standard",
+  opponent: "human",
   env: emptyEnv(),
   countdown: 60,
   elapsed: 0,
@@ -121,22 +120,138 @@ const game = {
 };
 
 function emptyEnv() {
-  return { gusts: [], gustTimer: 3, ship: null, shipTimer: 18, reefs: [] };
+  return { gusts: [], gustTimer: 4, ship: null, shipTimer: 18, reefs: [], land: null };
 }
 
-/* 암초 랜덤 배치: 마크·스타트 라인·다른 암초와 겹치지 않는 위치를 고른다 */
+const LAND_MAX_X = 300;   // 해안선이 절대 넘지 못하는 x (스타트 핀 442보다 충분히 왼쪽 → 코스 방해 안 함)
+
+/* 왼쪽 해안선을 y에 따라 들쭉날쭉하게 랜덤 생성. 코스(마크·스타트 라인)는 침범하지 않는다.
+   pts: [{y, x}] — 해당 y에서 육지가 x 이하를 차지한다. */
+function generateLand() {
+  const p1 = Math.random() * Math.PI * 2;
+  const p2 = Math.random() * Math.PI * 2;
+  const p3 = Math.random() * Math.PI * 2;
+  const base = 80 + Math.random() * 55;         // 기본 해안선 x
+  const amp = 55 + Math.random() * 70;          // 굴곡 크기
+  const pts = [];
+  for (let y = -30; y <= HEIGHT + 30; y += 26) {
+    let x = base
+      + Math.sin(y / 150 + p1) * amp
+      + Math.sin(y / 74 + p2) * amp * 0.34
+      + Math.sin(y / 320 + p3) * amp * 0.55;
+    x = clamp(x, 36, LAND_MAX_X);
+    pts.push({ y, x });
+  }
+  return { pts };
+}
+
+function coastlineAt(y) {
+  const land = game.env && game.env.land;
+  if (!land) return 0;
+  const pts = land.pts;
+  if (y <= pts[0].y) return pts[0].x;
+  for (let i = 1; i < pts.length; i += 1) {
+    if (y <= pts[i].y) {
+      const a = pts[i - 1];
+      const b = pts[i];
+      const tt = (y - a.y) / ((b.y - a.y) || 1);
+      return a.x + (b.x - a.x) * tt;
+    }
+  }
+  return pts[pts.length - 1].x;
+}
+
+/* 암초 랜덤 배치: 육지·마크·스타트 라인·다른 암초와 겹치지 않는 위치를 고른다 */
 function generateReefs(courseKey) {
   const reefs = [];
   const marks = courses[courseKey].marks;
   let tries = 0;
-  while (reefs.length < 2 && tries < 60) {
+  while (reefs.length < 2 && tries < 80) {
     tries += 1;
-    const candidate = { x: 280 + Math.random() * 880, y: 240 + Math.random() * 360, r: 30 + Math.random() * 10 };
+    const candidate = { x: (LAND_MAX_X + 80) + Math.random() * (WIDTH - LAND_MAX_X - 220), y: 240 + Math.random() * 360, r: 30 + Math.random() * 10 };
     const clearOfMarks = marks.every((m) => Math.hypot(m.x - candidate.x, m.y - candidate.y) > 190);
     const clearOfReefs = reefs.every((r) => Math.hypot(r.x - candidate.x, r.y - candidate.y) > 220);
     if (clearOfMarks && clearOfReefs) reefs.push(candidate);
   }
   return reefs;
+}
+
+/* ───────── 선체(부채꼴) 윤곽 충돌 기하 ───────── */
+
+// 보트 로컬 좌표의 선체 윤곽 (뱃머리 0,-28 → 우현 → 선미 → 좌현). drawBoat 모양과 일치.
+const BOAT_HULL = [
+  { x: 0, y: -28 }, { x: 13, y: -6 }, { x: 17, y: 18 },
+  { x: 0, y: 27 }, { x: -17, y: 18 }, { x: -13, y: -6 },
+];
+const HULL_REACH = 28;         // 선체 최대 반경(뱃머리) — 여유 이격 계산용
+
+function hullPoints(boat) {
+  const c = Math.cos(degToRad(boat.heading));
+  const s = Math.sin(degToRad(boat.heading));
+  return BOAT_HULL.map((p) => ({
+    x: boat.x + p.x * c - p.y * s,
+    y: boat.y + p.x * s + p.y * c,
+  }));
+}
+
+function closestOnSeg(ax, ay, bx, by, px, py) {
+  const dx = bx - ax;
+  const dy = by - ay;
+  const len2 = dx * dx + dy * dy || 1;
+  let tt = ((px - ax) * dx + (py - ay) * dy) / len2;
+  tt = clamp(tt, 0, 1);
+  return { x: ax + dx * tt, y: ay + dy * tt };
+}
+
+function pointInPoly(poly, px, py) {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const xi = poly[i].x, yi = poly[i].y, xj = poly[j].x, yj = poly[j].y;
+    if (((yi > py) !== (yj > py)) && (px < (xj - xi) * (py - yi) / ((yj - yi) || 1e-9) + xi)) inside = !inside;
+  }
+  return inside;
+}
+
+function closestOnPoly(poly, px, py) {
+  let best = null;
+  let bd = Infinity;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const q = closestOnSeg(poly[j].x, poly[j].y, poly[i].x, poly[i].y, px, py);
+    const d = Math.hypot(q.x - px, q.y - py);
+    if (d < bd) { bd = d; best = q; }
+  }
+  return { point: best, dist: bd };
+}
+
+/** 선체 윤곽 vs 원형 장애물. 겹치면 보트를 밀어낼 {nx, ny, depth} 반환, 아니면 null. */
+function hullCircleHit(boat, cx, cy, r) {
+  const poly = hullPoints(boat);
+  const near = closestOnPoly(poly, cx, cy);
+  if (pointInPoly(poly, cx, cy)) {
+    // 장애물 중심이 선체 안: 보트 중심 반대 방향으로 크게 밀어낸다
+    let nx = boat.x - cx;
+    let ny = boat.y - cy;
+    const d = Math.hypot(nx, ny) || 1;
+    return { nx: nx / d, ny: ny / d, depth: r + near.dist + 4 };
+  }
+  if (near.dist < r) {
+    // 가장 가까운 선체 점이 장애물 반경 안: 그 점을 바깥으로 미는 방향
+    let nx = near.point.x - cx;
+    let ny = near.point.y - cy;
+    const d = Math.hypot(nx, ny) || 1;
+    return { nx: nx / d, ny: ny / d, depth: r - near.dist };
+  }
+  return null;
+}
+
+/** 선체가 육지(해안선 x 이하)에 파고들면 바다쪽으로 밀 침투 깊이 반환(px), 아니면 0 */
+function hullLandPenetration(boat) {
+  let maxPen = 0;
+  for (const p of hullPoints(boat)) {
+    const pen = coastlineAt(p.y) - p.x;
+    if (pen > maxPen) maxPen = pen;
+  }
+  return maxPen;
 }
 
 function createBoat(name, x, heading) {
@@ -167,18 +282,125 @@ function createBoat(name, x, heading) {
     },
     finished: false,
     finishTime: null,
+    ai: null,          // null=사람, 아니면 "easy"|"medium"|"hard"
+    aiTack: 0,         // 현재 클로즈홀드 택 부호 (+1/-1), 0=풍상 아님
+    aiTackTimer: 0,    // 현재 택 유지 시간
+    aiThink: 0,        // 다음 판단 바이어스 갱신까지 남은 시간
+    aiBias: 0,         // 항로 랜덤 편차(실력 낮을수록 큼)
   };
 }
 
-function resetRace(courseKey, sequenceLength, weatherMode) {
+/* ───────── AI 상대 (하급/중급/고급) ───────── */
+
+const AI_LEVELS = {
+  easy:   { steer: 0.55, angleErr: 20, tackCooldown: 6.0, avoid: false, trimSkill: 0.45, upwindAngle: 55 },
+  medium: { steer: 0.82, angleErr: 8,  tackCooldown: 4.0, avoid: true,  trimSkill: 0.8,  upwindAngle: 48 },
+  hard:   { steer: 1.0,  angleErr: 3,  tackCooldown: 3.0, avoid: true,  trimSkill: 1.0,  upwindAngle: 44 },
+};
+
+/** AI가 향할 목표점을 정한다 (프리스타트/스타트/마크 라운딩/피니시) */
+function aiTarget(boat) {
+  const marks = courses[game.courseKey].marks;
+  const gateX = (START_LEFT + START_RIGHT) / 2;
+  if (game.phase === "prestart") {
+    if (game.countdown < 2.4) return { x: gateX, y: START_Y - 220 };   // 스타트 직전 라인 통과 준비
+    return { x: gateX + 40, y: START_Y + 120 };                        // 라인 아래에서 대기
+  }
+  if (!boat.started) return { x: gateX, y: START_Y - 220 };            // 북쪽으로 스타트
+  if (boat.markIndex < marks.length) {
+    const m = marks[boat.markIndex];
+    // 마크를 반시계(↺)로 돌도록, 마크 주위 라운딩 반경의 CCW 앞선 지점을 겨냥
+    const a = Math.atan2(boat.y - m.y, boat.x - m.x);
+    const R = MARK_ROUNDING_RADIUS - 16;
+    return { x: m.x + Math.cos(a - 0.55) * R, y: m.y + Math.sin(a - 0.55) * R };
+  }
+  return { x: gateX, y: START_Y + 170 };                               // 피니시(남쪽 통과)
+}
+
+/** 중급 이상: 앞쪽에 암초·육지·대형선이 있으면 목표 헤딩을 살짝 틀어 회피 */
+function aiAvoid(boat, desired) {
+  const look = 135;
+  const hx = boat.x + Math.sin(degToRad(desired)) * look;
+  const hy = boat.y - Math.cos(degToRad(desired)) * look;
+  for (const reef of game.env.reefs) {
+    if (Math.hypot(hx - reef.x, hy - reef.y) < reef.r + 42) {
+      const rel = shortestAngle(desired, normDeg(Math.atan2(reef.x - boat.x, -(reef.y - boat.y)) * 180 / Math.PI));
+      return normDeg(desired + (rel >= 0 ? -38 : 38));
+    }
+  }
+  if (boat.x < coastlineAt(boat.y) + 110) {
+    return normDeg(desired + clamp(shortestAngle(desired, 90), -32, 32)); // 바다(동쪽)로
+  }
+  const s = game.env.ship;
+  if (s && Math.hypot(hx - s.x, hy - s.y) < s.len * 0.5 + 55) {
+    const rel = shortestAngle(desired, normDeg(Math.atan2(s.x - boat.x, -(s.y - boat.y)) * 180 / Math.PI));
+    return normDeg(desired + (rel >= 0 ? -42 : 42));
+  }
+  return desired;
+}
+
+/** AI 조타: 목표 방향 계산 → 풍상이면 클로즈홀드 태킹, 아니면 직접 진행 */
+function aiSteer(boat, dt) {
+  const level = AI_LEVELS[boat.ai] || AI_LEVELS.medium;
+  boat.aiTackTimer += dt;
+  boat.aiThink -= dt;
+  if (boat.aiThink <= 0) {
+    boat.aiBias = (Math.random() - 0.5) * level.angleErr;
+    boat.aiThink = 0.6 + Math.random() * 0.9;
+  }
+
+  const tgt = aiTarget(boat);
+  const bearing = normDeg(Math.atan2(tgt.x - boat.x, -(tgt.y - boat.y)) * 180 / Math.PI);
+  const wind = game.wind.direction;
+  const offWind = shortestAngle(bearing, wind);   // 0 = 정면 풍상
+  let desired = bearing;
+
+  if (Math.abs(offWind) < level.upwindAngle) {
+    // 목표가 노고존 안 → 클로즈홀드로 지그재그
+    if (!boat.aiTack) boat.aiTack = offWind >= 0 ? 1 : -1;
+    desired = normDeg(wind + boat.aiTack * level.upwindAngle);
+    const nearLand = boat.x < coastlineAt(boat.y) + 95;
+    const nearEdge = boat.x > WIDTH - 80;
+    const shouldSwitch = boat.aiTackTimer > level.tackCooldown &&
+      Math.sign(offWind) !== Math.sign(boat.aiTack) && Math.sign(offWind) !== 0;
+    if ((shouldSwitch || nearLand || nearEdge) && !boat.tacking && !boat.penalty && boat.aiTackTimer > 1.3) {
+      startTack(boat, boat.aiTack > 0 ? -1 : 1);
+      boat.aiTack = -boat.aiTack;
+      boat.aiTackTimer = 0;
+      return;
+    }
+  } else {
+    boat.aiTack = 0;
+    // 정풍하(데드런) 근처면 브로드리치 각도로 벌려 속도 유지
+    const offDown = shortestAngle(bearing, normDeg(wind + 180));
+    if (Math.abs(offDown) < 14) desired = normDeg(bearing + (offDown >= 0 ? 20 : -20));
+  }
+
+  if (level.avoid) desired = aiAvoid(boat, desired);
+  desired = normDeg(desired + boat.aiBias);
+
+  const steeringPower = .28 + clamp(boat.speed / 75, 0, 1) * .72;
+  const rate = 76 * steeringPower * level.steer;
+  const diff = shortestAngle(boat.heading, desired);
+  boat.heading = normDeg(boat.heading + clamp(diff, -rate * dt, rate * dt));
+
+  const wa = angleDiff(boat.heading, wind);
+  const optRaw = wa < 55 ? 0.9 : wa < 100 ? 0.62 : 0.32;
+  const optTrim = 0.55 + (optRaw - 0.55) * level.trimSkill;
+  boat.trim += (optTrim - boat.trim) * Math.min(1, dt * 2);
+}
+
+function resetRace(courseKey, sequenceLength, weatherMode, opponent) {
   game.configured = true;
   game.paused = false;
   game.phase = "prestart";
   game.courseKey = courseKey;
   game.sequenceLength = sequenceLength;
+  game.opponent = AI_LEVELS[opponent] ? opponent : "human";
   game.weatherMode = weatherMode === "wild" ? "wild" : "standard";
   game.env = emptyEnv();
   if (game.weatherMode === "wild") {
+    game.env.land = generateLand();
     game.env.reefs = generateReefs(courseKey);
     game.env.shipTimer = 12 + Math.random() * 15;
   }
@@ -207,6 +429,10 @@ function resetRace(courseKey, sequenceLength, weatherMode) {
     A: createBoat("A", 610, 350),
     B: createBoat("B", 850, 10),
   };
+  // 보트 B를 AI가 조종 (혼자 플레이). 대시보드 이름도 AI 등급으로 바꾼다.
+  game.boats.B.ai = game.opponent === "human" ? null : game.opponent;
+  const bName = document.querySelector(".player-b .player-head strong");
+  if (bName) bName.textContent = game.boats.B.ai ? t("gAiName", game.boats.B.ai) : "Blue";
   ui.eventLog.innerHTML = "";
   ui.courseLabel.textContent = courseName(courseKey);
   ui.pauseButton.textContent = t("gPause");
@@ -421,6 +647,10 @@ function updateBoat(boat, controls, dt) {
       const completedTurns = boat.penalty.turns;
       boat.heading = normDeg(boat.heading);
       boat.penalty = null;
+      // 벌칙을 마친 순간 오브젝트에 붙어 있으면 떼어내고 바깥으로 향하게 한다.
+      ejectFromNearestObject(boat);
+      // 유예 시간을 줘서 빠져나가는 동안 즉시 재벌칙되지 않도록 한다.
+      boat.objectContactCooldown = Math.max(boat.objectContactCooldown, 1.6);
       addLog(t("gLogPenaltyDone", boat.name, completedTurns), "good");
     }
   } else if (boat.tacking) {
@@ -434,6 +664,8 @@ function updateBoat(boat, controls, dt) {
       boat.tacking = null;
       addLog(t("gLogTackDone", boat.name, tackLabel(tackOf(boat))));
     }
+  } else if (boat.ai) {
+    aiSteer(boat, dt);
   } else {
     if (keys.has(controls.trimIn)) boat.trim = clamp(boat.trim + dt * .42, 0.18, 1);
     if (keys.has(controls.trimOut)) boat.trim = clamp(boat.trim - dt * .5, 0.18, 1);
@@ -451,9 +683,12 @@ function updateBoat(boat, controls, dt) {
   const response = targetSpeed > boat.speed ? 1.3 : 2.1;
   boat.speed += (targetSpeed - boat.speed) * Math.min(1, dt * response);
 
+  // 벌칙 회전 중에는 이동량을 크게 줄여 "제자리에서 회전"하게 한다.
+  // (예전엔 앞으로 나아가며 오브젝트 주위를 맴돌아 빠져나오기 어려웠음)
   const forward = vecFromCompass(boat.heading);
-  boat.x += forward.x * boat.speed * dt;
-  boat.y += forward.y * boat.speed * dt;
+  const translate = boat.penalty ? 0.18 : 1;
+  boat.x += forward.x * boat.speed * dt * translate;
+  boat.y += forward.y * boat.speed * dt * translate;
 
   if (boat.x < 30 || boat.x > WIDTH - 30) {
     boat.x = clamp(boat.x, 30, WIDTH - 30);
@@ -623,27 +858,33 @@ function updateEnvironment(dt) {
   if (game.weatherMode !== "wild") return;
   const env = game.env;
 
-  // 거스트(가속)와 럴(감속) 패치 — 랜덤 생성 후 바람 방향으로 흘러간다
+  // 거스트(가속)와 럴(감속) 패치 — 바람 불어오는 쪽 멀리서 생겨 코스로 천천히 밀려온다
+  const up = vecFromCompass(game.wind.direction);            // 바람이 불어오는 방향(상류)
+  const down = vecFromCompass(game.wind.direction + 180);    // 흘러가는 방향(하류)
+  const perpX = -up.y;
+  const perpY = up.x;
   env.gustTimer -= dt;
-  if (env.gustTimer <= 0 && env.gusts.length < 6) {
+  if (env.gustTimer <= 0 && env.gusts.length < 5) {
     const isLull = Math.random() < 0.35;
+    const along = 0.55 + Math.random() * 0.5;                // 화면 밖 상류에서 스폰
+    const spread = (Math.random() - 0.5);
     env.gusts.push({
-      x: 80 + Math.random() * (WIDTH - 160),
-      y: 60 + Math.random() * (HEIGHT - 220),
-      r: 90 + Math.random() * 80,
+      x: WIDTH / 2 + up.x * WIDTH * along + perpX * spread * WIDTH * 0.95,
+      y: HEIGHT / 2 + up.y * HEIGHT * along + perpY * spread * HEIGHT * 0.95,
+      r: 135 + Math.random() * 95,                            // 더 크게 → 멀리서도 보이고 넓게 덮음
       strength: isLull ? 0.55 + Math.random() * 0.15 : 1.35 + Math.random() * 0.35,
       age: 0,
-      life: 7 + Math.random() * 6,
+      life: 16 + Math.random() * 10,                          // 훨씬 오래 유지 → 깜빡임 감소
     });
-    env.gustTimer = 2.5 + Math.random() * 3.5;
+    env.gustTimer = 3.5 + Math.random() * 3.5;
   }
-  const downwind = vecFromCompass(game.wind.direction + 180);
+  const drift = 11 + game.wind.speed * 1.0;                   // 예전(20+speed*2)보다 느리게 다가옴
   for (const g of env.gusts) {
     g.age += dt;
-    g.x += downwind.x * dt * (20 + game.wind.speed * 2);
-    g.y += downwind.y * dt * (20 + game.wind.speed * 2);
+    g.x += down.x * dt * drift;
+    g.y += down.y * dt * drift;
   }
-  env.gusts = env.gusts.filter((g) => g.age < g.life && g.x > -220 && g.x < WIDTH + 220 && g.y > -220 && g.y < HEIGHT + 220);
+  env.gusts = env.gusts.filter((g) => g.age < g.life && g.x > -320 && g.x < WIDTH + 320 && g.y > -320 && g.y < HEIGHT + 320);
 
   // 대형선이 코스를 가로지른다
   env.shipTimer -= dt;
@@ -677,34 +918,43 @@ function resolveEnvCollisions() {
   for (const boat of Object.values(game.boats)) {
     if (boat.finished) continue;
 
-    if (env.ship && boat.objectContactCooldown <= 0) {
+    // 대형선 — 선체 윤곽 vs 배 중심선(선분) 반경
+    if (env.ship) {
       const s = env.ship;
-      const cx = clamp(boat.x, s.x - s.len / 2, s.x + s.len / 2);
-      const dx = boat.x - cx;
-      const dy = boat.y - s.y;
-      const dist = Math.hypot(dx, dy);
-      const min = BOAT_RADIUS + s.beam / 2;
-      if (dist < min) {
-        const nx = dist ? dx / dist : 0;
-        const ny = dist ? dy / dist : -1;
-        boat.x += nx * (min - dist + 8);
-        boat.y += ny * (min - dist + 8);
+      const near = { x: clamp(boat.x, s.x - s.len / 2, s.x + s.len / 2), y: s.y };
+      const hit = hullCircleHit(boat, near.x, near.y, s.beam / 2);
+      if (hit) {
+        boat.x += hit.nx * (hit.depth + 6);
+        boat.y += hit.ny * (hit.depth + 6);
         boat.speed *= 0.2;
         boat.collisionFlash = 1;
-        boat.objectContactCooldown = 2.4;
-        applyPenalty(boat, t("gLogShipHit"), 1);
+        if (boat.objectContactCooldown <= 0 && !boat.penalty) {
+          boat.objectContactCooldown = 2.4;
+          applyPenalty(boat, t("gLogShipHit"), 1);
+        }
       }
     }
 
+    // 육지 — 딱딱한 장애물처럼 바다쪽으로 밀어낸다 (벌칙 없이 회피 유도)
+    const pen = hullLandPenetration(boat);
+    if (pen > 0) {
+      boat.x += pen + 3;                 // 해안선 오른쪽(바다)로 밀어냄
+      boat.speed *= 0.55;
+      boat.collisionFlash = 1;
+      // 뱃머리가 육지를 향하면 살짝 바다쪽으로 틀어 얹히지 않게 한다
+      const f = vecFromCompass(boat.heading);
+      if (f.x < 0) boat.heading = normDeg(boat.heading + (boat.heading > 180 ? -6 : 6));
+    }
+
+    // 암초 — 선체 윤곽 접촉 시 크게 감속 + 진행방향 ±45° 튕김
     if (boat.agroundCooldown <= 0) {
       for (const reef of env.reefs) {
-        const d = Math.hypot(boat.x - reef.x, boat.y - reef.y);
-        if (d < BOAT_RADIUS + reef.r) {
-          const nx = (boat.x - reef.x) / (d || 1);
-          const ny = (boat.y - reef.y) / (d || 1);
-          boat.x = reef.x + nx * (BOAT_RADIUS + reef.r + 6);
-          boat.y = reef.y + ny * (BOAT_RADIUS + reef.r + 6);
-          boat.speed *= 0.12;
+        const hit = hullCircleHit(boat, reef.x, reef.y, reef.r);
+        if (hit) {
+          boat.x += hit.nx * (hit.depth + 4);
+          boat.y += hit.ny * (hit.depth + 4);
+          boat.speed *= 0.22;                                  // 증속 버그 제거 → 큰 감속
+          boat.heading = normDeg(boat.heading + (Math.random() < 0.5 ? -45 : 45)); // ±45° 튕김
           boat.collisionFlash = 1;
           boat.agroundCooldown = 2.5;
           addLog(t("gLogAground", boat.name), "warn");
@@ -729,9 +979,11 @@ function envSpeedFactor(boat) {
   }
   factor *= gustEffect;
 
-  // 해안(왼쪽) 근처는 육지에 깨진 바람, 먼바다(오른쪽)는 해풍 이득
-  if (boat.x < SHORE_W + 140) {
-    factor *= 0.62 + 0.33 * clamp((boat.x - SHORE_W) / 140, 0, 1);
+  // 해안선 근처는 육지에 깨진 바람(랜덤 해안선 기준), 먼바다(오른쪽)는 해풍 이득
+  const coast = coastlineAt(boat.y);
+  const BROKEN = 165;
+  if (boat.x < coast + BROKEN) {
+    factor *= 0.6 + 0.36 * clamp((boat.x - coast) / BROKEN, 0, 1);
   } else if (boat.x > WIDTH * 0.72) {
     factor *= 1.1;
   }
@@ -836,20 +1088,50 @@ function detectCollision(dt) {
   }
 }
 
+/** 스타트 라인 오브젝트(RC·핀·마크) 목록 */
+function startAreaObjects() {
+  const objs = [
+    { x: RC_X, y: RC_Y, r: RC_HIT_RADIUS },
+    { x: PIN_X, y: PIN_Y, r: PIN_HIT_RADIUS },
+  ];
+  for (const mark of courses[game.courseKey].marks) objs.push({ x: mark.x, y: mark.y, r: MARK_BODY_RADIUS });
+  return objs;
+}
+
+/** 벌칙을 끝낸 보트가 가장 가까운 오브젝트에 붙어 있으면, 확실히 떼어내고
+    바깥쪽을 향하도록 뱃머리를 돌린 뒤 탈출 속도를 준다 (제자리 회전 탈출 불가 방지) */
+function ejectFromNearestObject(boat) {
+  let nearest = null;
+  let nearestGap = Infinity;
+  for (const o of startAreaObjects()) {
+    const gap = Math.hypot(boat.x - o.x, boat.y - o.y) - (HULL_REACH + o.r);
+    if (gap < nearestGap) { nearestGap = gap; nearest = o; }
+  }
+  if (!nearest || nearestGap > 55) return;
+  const ang = Math.atan2(boat.y - nearest.y, boat.x - nearest.x); // 오브젝트→보트 방향(화면 좌표)
+  const clearDist = HULL_REACH + nearest.r + 46;
+  boat.x = clamp(nearest.x + Math.cos(ang) * clearDist, 30, WIDTH - 30);
+  boat.y = clamp(nearest.y + Math.sin(ang) * clearDist, 30, HEIGHT - 30);
+  // 바깥쪽 방향을 나침반 헤딩(0=위, 시계방향)으로 변환해 뱃머리를 밖으로 돌린다
+  boat.heading = normDeg(Math.atan2(Math.cos(ang), -Math.sin(ang)) * 180 / Math.PI);
+  boat.speed = Math.max(boat.speed, 90); // 다시 붙기 전에 빠져나갈 추진력
+}
+
 function resolveCourseObjectContact(boat, object, radius, label) {
-  if (boat.finished || boat.objectContactCooldown > 0) return false;
+  if (boat.finished) return false;
 
-  const dx = boat.x - object.x;
-  const dy = boat.y - object.y;
-  const distance = Math.hypot(dx, dy);
-  const minimumDistance = BOAT_RADIUS + radius;
-  if (distance >= minimumDistance) return false;
+  // 선체(부채꼴) 윤곽 기준 접촉 판정 — 원형 반경이 아님
+  const hit = hullCircleHit(boat, object.x, object.y, radius);
+  if (!hit) return false;
 
-  const nx = distance ? dx / distance : 0;
-  const ny = distance ? dy / distance : 1;
-  const push = minimumDistance - distance + 5;
-  boat.x += nx * push;
-  boat.y += ny * push;
+  // 접촉 시에는 항상 물리적으로 밀어내 선체가 오브젝트에 파묻히지 않게 한다.
+  boat.x += hit.nx * (hit.depth + 3);
+  boat.y += hit.ny * (hit.depth + 3);
+
+  // 이미 벌칙 수행 중이거나 방금 벌칙을 마친 유예 시간에는 새 벌칙을 겹쳐 주지 않는다.
+  // (겹쳐 주면 같은 자리에서 무한히 빙글빙글 도는 문제가 생김)
+  if (boat.penalty || boat.objectContactCooldown > 0) return false;
+
   boat.speed *= .28;
   boat.collisionFlash = 1;
   boat.objectContactCooldown = 2.1;
@@ -1083,27 +1365,54 @@ function drawMark(mark, number) {
 }
 
 function drawShore() {
-  if (game.weatherMode !== "wild") return;
+  if (game.weatherMode !== "wild" || !game.env.land) return;
+  const pts = game.env.land.pts;
   ctx.save();
-  const grad = ctx.createLinearGradient(0, 0, SHORE_W + 70, 0);
-  grad.addColorStop(0, "#e8d9a8");
-  grad.addColorStop(0.55, "#dfe9c9");
-  grad.addColorStop(1, "rgba(223,233,201,0)");
+
+  // 깨진 바람 밴드 (해안선 오른쪽 음영)
+  ctx.fillStyle = "rgba(90,107,112,.10)";
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (const p of pts) ctx.lineTo(p.x, p.y);
+  for (let i = pts.length - 1; i >= 0; i -= 1) ctx.lineTo(pts[i].x + 165, pts[i].y);
+  ctx.closePath();
+  ctx.fill();
+
+  // 육지 채우기 (모래 → 풀)
+  const grad = ctx.createLinearGradient(0, 0, LAND_MAX_X + 30, 0);
+  grad.addColorStop(0, "#b9a875");
+  grad.addColorStop(0.55, "#cdc48f");
+  grad.addColorStop(1, "#e6e1bd");
   ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, SHORE_W + 70, HEIGHT);
-  ctx.fillStyle = "rgba(255,255,255,.5)";
-  for (let y = 12; y < HEIGHT; y += 34) {
+  ctx.beginPath();
+  ctx.moveTo(0, -30);
+  for (const p of pts) ctx.lineTo(p.x, p.y);
+  ctx.lineTo(0, HEIGHT + 30);
+  ctx.closePath();
+  ctx.fill();
+
+  // 해안선 + 부서지는 파도
+  ctx.strokeStyle = "rgba(120,105,60,.55)";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  pts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+  ctx.stroke();
+  ctx.fillStyle = "rgba(255,255,255,.55)";
+  for (let i = 2; i < pts.length - 2; i += 3) {
+    const p = pts[i];
     ctx.beginPath();
-    ctx.arc(SHORE_W + Math.sin(y / 30 + game.simTime) * 6, y, 3, 0, Math.PI * 2);
+    ctx.arc(p.x + 5 + Math.sin(p.y / 26 + game.simTime * 1.3) * 4, p.y, 2.6, 0, Math.PI * 2);
     ctx.fill();
   }
-  ctx.fillStyle = "rgba(11,71,81,.6)";
+
+  // 라벨
+  ctx.fillStyle = "rgba(90,80,45,.85)";
   ctx.font = "950 11px sans-serif";
   ctx.save();
-  ctx.translate(16, HEIGHT / 2);
+  ctx.translate(22, HEIGHT / 2);
   ctx.rotate(-Math.PI / 2);
   ctx.textAlign = "center";
-  ctx.fillText("SHORE · LIGHT AIR", 0, 0);
+  ctx.fillText("LAND · LIGHT AIR", 0, 0);
   ctx.restore();
   ctx.restore();
 }
@@ -1624,7 +1933,7 @@ window.addEventListener("blur", () => keys.clear());
 ui.setupForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const data = new FormData(ui.setupForm);
-  resetRace(data.get("course"), Number(data.get("sequence")), data.get("weather"));
+  resetRace(data.get("course"), Number(data.get("sequence")), data.get("weather"), data.get("opponent"));
   ui.setupOverlay.hidden = true;
   document.getElementById("raceArena").scrollIntoView({ behavior: "smooth", block: "start" });
 });
@@ -1644,6 +1953,8 @@ ui.clearLogButton.addEventListener("click", () => {
 window.HubI18n.onChange(() => {
   ui.pauseButton.textContent = game.paused ? (game.configured ? t("gResume") : t("gPause")) : t("gPause");
   if (game.configured) ui.courseLabel.textContent = courseName(game.courseKey);
+  const bName = document.querySelector(".player-b .player-head strong");
+  if (bName && game.boats.B && game.boats.B.ai) bName.textContent = t("gAiName", game.boats.B.ai);
 });
 
 game.boats = {
