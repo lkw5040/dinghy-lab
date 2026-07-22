@@ -6,15 +6,16 @@
     <title>2-Player Dinghy Race Game — One Keyboard | Dinghy Lab (RRS 2025-2028)</title>
     <meta
       name="description"
-      content="dinghy yacht racing flags, wind, mark roundings, check yacht rule, yacht game"
+      content="Free two-player dinghy racing on one keyboard: start sequence with flags, shifting wind, mark roundings, live right-of-way calls and penalty turns."
     />
     <meta name="theme-color" content="#082c3c" />
     <meta name="robots" content="index,follow,max-image-preview:large" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Dinghy Lab" />
     <meta property="og:title" content="2-Player Dinghy Race Game — One Keyboard" />
-    <meta property="og:description" content="yacht Race keyboard game with real start flags, shifting wind and understanding dinghy yacht" />
-    <meta property="og:image" content="assets/hero-dinghy.png" />
+    <meta property="og:description" content="Race a friend on one keyboard with real start flags, shifting wind and live right-of-way calls." />
+    <meta property="og:url" content="https://dinghy-lab.netlify.app/game.html" />
+    <meta property="og:image" content="https://dinghy-lab.netlify.app/assets/hero-dinghy.png" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="assets/icons/icon-192.png" type="image/png" />
@@ -27,7 +28,7 @@
       "@context": "https://schema.org",
       "@type": "VideoGame",
       "name": "Dinghy Lab Race",
-      "description": "dinghy yacht racing game on one keyboard, based on the Racing Rules of Sailing 2025-2028",
+      "description": "Free two-player dinghy racing game on one keyboard, based on the Racing Rules of Sailing 2025-2028",
       "applicationCategory": "Game",
       "operatingSystem": "Web Browser",
       "playMode": "MultiPlayer",
@@ -35,6 +36,34 @@
       "inLanguage": ["en", "ko", "es", "fr", "de"],
       "isAccessibleForFree": true,
       "genre": ["Sailing", "Racing", "Educational"]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Can I play without installing anything?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes. Open the page in a desktop browser like Chrome, Edge or Firefox and play immediately." }
+        },
+        {
+          "@type": "Question",
+          "name": "Why do the boat colors change during the race?",
+          "acceptedAnswer": { "@type": "Answer", "text": "When the boats get close, green marks the right-of-way boat and red the boat that must keep clear." }
+        },
+        {
+          "@type": "Question",
+          "name": "Is this exactly the same as real racing rules?",
+          "acceptedAnswer": { "@type": "Answer", "text": "It is a simplification for learning and gameplay. In real races, always check the current Racing Rules of Sailing and sailing instructions." }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I play on mobile?",
+          "acceptedAnswer": { "@type": "Answer", "text": "The game is optimized for two players on one keyboard. Touch controls may come later." }
+        }
+      ]
     }
     </script>
   </head>
@@ -146,6 +175,7 @@
               <span data-i18n="gCanvasHelp3">All marks round counter-clockwise ↺</span>
               <span data-i18n="gCanvasHelp4">You can steer before the start</span>
               <span data-i18n="gCanvasHelp5">Esc: pause</span>
+              <span data-i18n="gCanvasHelp6" id="envHelp" hidden>Dark patch = gust (faster) · pale patch = lull · left shore = broken wind</span>
             </div>
           </section>
 
@@ -372,6 +402,20 @@
             <label>
               <input type="radio" name="sequence" value="300" />
               <span><strong data-i18n="gSeq5">5-minute official</strong><small data-i18n="gSeq5Sub">5-min · 4-min · 1-min · start signal</small></span>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend data-i18n="gWeatherLegend">Race conditions</legend>
+          <div class="sequence-options">
+            <label>
+              <input type="radio" name="weather" value="standard" checked />
+              <span><strong data-i18n="gWeatherStd">Standard</strong><small data-i18n="gWeatherStdSub">Steady wind and clear water</small></span>
+            </label>
+            <label>
+              <input type="radio" name="weather" value="wild" />
+              <span><strong data-i18n="gWeatherWild">Wild weather race</strong><small data-i18n="gWeatherWildSub">Random gusts &amp; lulls, passing ships, reefs — and a stronger sea breeze offshore</small></span>
             </label>
           </div>
         </fieldset>

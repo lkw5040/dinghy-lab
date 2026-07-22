@@ -88,12 +88,16 @@ function markName(mark) { return t(mark.key); }
 function courseName(courseKey) { return t(courses[courseKey].nameKey); }
 function tackLabel(tack) { return tack === "starboard" ? t("gStarboard") : t("gPort"); }
 
+const SHORE_W = 58;            // visible beach band on the left (wild mode)
+
 const game = {
   configured: false,
   paused: true,
   phase: "setup",
   courseKey: "windward",
   sequenceLength: 60,
+  weatherMode: "standard",
+  env: emptyEnv(),
   countdown: 60,
   elapsed: 0,
   simTime: 0,
@@ -116,6 +120,25 @@ const game = {
   boats: {},
 };
 
+function emptyEnv() {
+  return { gusts: [], gustTimer: 3, ship: null, shipTimer: 18, reefs: [] };
+}
+
+/* 암초 랜덤 배치: 마크·스타트 라인·다른 암초와 겹치지 않는 위치를 고른다 */
+function generateReefs(courseKey) {
+  const reefs = [];
+  const marks = courses[courseKey].marks;
+  let tries = 0;
+  while (reefs.length < 2 && tries < 60) {
+    tries += 1;
+    const candidate = { x: 280 + Math.random() * 880, y: 240 + Math.random() * 360, r: 30 + Math.random() * 10 };
+    const clearOfMarks = marks.every((m) => Math.hypot(m.x - candidate.x, m.y - candidate.y) > 190);
+    const clearOfReefs = reefs.every((r) => Math.hypot(r.x - candidate.x, r.y - candidate.y) > 220);
+    if (clearOfMarks && clearOfReefs) reefs.push(candidate);
+  }
+  return reefs;
+}
+
 function createBoat(name, x, heading) {
   return {
     name,
@@ -129,6 +152,7 @@ function createBoat(name, x, heading) {
     penalty: null,
     penaltyCount: 0,
     objectContactCooldown: 0,
+    agroundCooldown: 0,
     collisionFlash: 0,
     started: false,
     ocs: false,
@@ -146,12 +170,20 @@ function createBoat(name, x, heading) {
   };
 }
 
-function resetRace(courseKey, sequenceLength) {
+function resetRace(courseKey, sequenceLength, weatherMode) {
   game.configured = true;
   game.paused = false;
   game.phase = "prestart";
   game.courseKey = courseKey;
   game.sequenceLength = sequenceLength;
+  game.weatherMode = weatherMode === "wild" ? "wild" : "standard";
+  game.env = emptyEnv();
+  if (game.weatherMode === "wild") {
+    game.env.reefs = generateReefs(courseKey);
+    game.env.shipTimer = 12 + Math.random() * 15;
+  }
+  const envHelp = document.getElementById("envHelp");
+  if (envHelp) envHelp.hidden = game.weatherMode !== "wild";
   game.countdown = sequenceLength;
   game.elapsed = 0;
   game.simTime = 0;
@@ -373,6 +405,7 @@ function updateBoat(boat, controls, dt) {
   boat.previousY = boat.y;
   boat.collisionFlash = Math.max(0, boat.collisionFlash - dt);
   boat.objectContactCooldown = Math.max(0, boat.objectContactCooldown - dt);
+  boat.agroundCooldown = Math.max(0, boat.agroundCooldown - dt);
 
   if (boat.finished) {
     boat.speed *= Math.pow(0.12, dt);
@@ -414,7 +447,7 @@ function updateBoat(boat, controls, dt) {
   const sailFactor = polarFactor(boat);
   const penaltyFactor = boat.penalty ? .34 : 1;
   const trimFactor = .16 + boat.trim * .84;
-  const targetSpeed = game.wind.speed * 11.4 * sailFactor * trimFactor * penaltyFactor;
+  const targetSpeed = game.wind.speed * 11.4 * sailFactor * trimFactor * penaltyFactor * envSpeedFactor(boat);
   const response = targetSpeed > boat.speed ? 1.3 : 2.1;
   boat.speed += (targetSpeed - boat.speed) * Math.min(1, dt * response);
 
@@ -571,14 +604,149 @@ function updateCourseProgress(boat) {
 
 function updateWind(dt) {
   const wind = game.wind;
+  const wild = game.weatherMode === "wild";
   wind.nextShift -= dt;
+  if (wild) wind.base += (Math.random() - 0.5) * dt * 6; // 기준 풍향 자체가 서서히 흘러간다
   if (wind.nextShift <= 0) {
-    wind.targetDirection = wind.base + (Math.random() * 30 - 15);
-    wind.targetSpeed = 8 + Math.random() * 6;
-    wind.nextShift = 4.5 + Math.random() * 5;
+    const swing = wild ? 45 : 20;
+    wind.targetDirection = wind.base + (Math.random() * swing * 2 - swing);
+    wind.targetSpeed = wild ? 7 + Math.random() * 10 : 8 + Math.random() * 6;
+    wind.nextShift = wild ? 2 + Math.random() * 2.5 : 3.5 + Math.random() * 4.5;
   }
-  wind.direction += shortestAngle(wind.direction, wind.targetDirection) * Math.min(1, dt * .16);
+  wind.direction += shortestAngle(wind.direction, wind.targetDirection) * Math.min(1, dt * (wild ? .22 : .16));
   wind.speed += (wind.targetSpeed - wind.speed) * Math.min(1, dt * .11);
+}
+
+/* ───────── 변화무쌍 모드: 거스트·대형선·암초·해안 바람 ───────── */
+
+function updateEnvironment(dt) {
+  if (game.weatherMode !== "wild") return;
+  const env = game.env;
+
+  // 거스트(가속)와 럴(감속) 패치 — 랜덤 생성 후 바람 방향으로 흘러간다
+  env.gustTimer -= dt;
+  if (env.gustTimer <= 0 && env.gusts.length < 6) {
+    const isLull = Math.random() < 0.35;
+    env.gusts.push({
+      x: 80 + Math.random() * (WIDTH - 160),
+      y: 60 + Math.random() * (HEIGHT - 220),
+      r: 90 + Math.random() * 80,
+      strength: isLull ? 0.55 + Math.random() * 0.15 : 1.35 + Math.random() * 0.35,
+      age: 0,
+      life: 7 + Math.random() * 6,
+    });
+    env.gustTimer = 2.5 + Math.random() * 3.5;
+  }
+  const downwind = vecFromCompass(game.wind.direction + 180);
+  for (const g of env.gusts) {
+    g.age += dt;
+    g.x += downwind.x * dt * (20 + game.wind.speed * 2);
+    g.y += downwind.y * dt * (20 + game.wind.speed * 2);
+  }
+  env.gusts = env.gusts.filter((g) => g.age < g.life && g.x > -220 && g.x < WIDTH + 220 && g.y > -220 && g.y < HEIGHT + 220);
+
+  // 대형선이 코스를 가로지른다
+  env.shipTimer -= dt;
+  if (!env.ship && env.shipTimer <= 0) {
+    const fromLeft = Math.random() < 0.5;
+    env.ship = {
+      x: fromLeft ? -160 : WIDTH + 160,
+      y: 200 + Math.random() * 380,
+      dir: fromLeft ? 1 : -1,
+      speed: 95 + Math.random() * 45,
+      len: 190,
+      beam: 46,
+    };
+    announce("BIG SHIP", t("gShipBanner"), t("gShipDetail"), 3);
+    addLog(t("gLogShipSpawn"), "warn");
+    beep(0.3, 180);
+  }
+  if (env.ship) {
+    env.ship.x += env.ship.dir * env.ship.speed * dt;
+    if (env.ship.x < -240 || env.ship.x > WIDTH + 240) {
+      env.ship = null;
+      env.shipTimer = 22 + Math.random() * 26;
+    }
+  }
+
+  resolveEnvCollisions();
+}
+
+function resolveEnvCollisions() {
+  const env = game.env;
+  for (const boat of Object.values(game.boats)) {
+    if (boat.finished) continue;
+
+    if (env.ship && boat.objectContactCooldown <= 0) {
+      const s = env.ship;
+      const cx = clamp(boat.x, s.x - s.len / 2, s.x + s.len / 2);
+      const dx = boat.x - cx;
+      const dy = boat.y - s.y;
+      const dist = Math.hypot(dx, dy);
+      const min = BOAT_RADIUS + s.beam / 2;
+      if (dist < min) {
+        const nx = dist ? dx / dist : 0;
+        const ny = dist ? dy / dist : -1;
+        boat.x += nx * (min - dist + 8);
+        boat.y += ny * (min - dist + 8);
+        boat.speed *= 0.2;
+        boat.collisionFlash = 1;
+        boat.objectContactCooldown = 2.4;
+        applyPenalty(boat, t("gLogShipHit"), 1);
+      }
+    }
+
+    if (boat.agroundCooldown <= 0) {
+      for (const reef of env.reefs) {
+        const d = Math.hypot(boat.x - reef.x, boat.y - reef.y);
+        if (d < BOAT_RADIUS + reef.r) {
+          const nx = (boat.x - reef.x) / (d || 1);
+          const ny = (boat.y - reef.y) / (d || 1);
+          boat.x = reef.x + nx * (BOAT_RADIUS + reef.r + 6);
+          boat.y = reef.y + ny * (BOAT_RADIUS + reef.r + 6);
+          boat.speed *= 0.12;
+          boat.collisionFlash = 1;
+          boat.agroundCooldown = 2.5;
+          addLog(t("gLogAground", boat.name), "warn");
+          beep(0.22, 140);
+          break;
+        }
+      }
+    }
+  }
+}
+
+/* 보트 위치에 따른 국소 바람 배율: 거스트/럴 × 해안 바람 그늘 × 대형선 바람 그늘 */
+function envSpeedFactor(boat) {
+  if (game.weatherMode !== "wild") return 1;
+  let factor = 1;
+
+  let gustEffect = 1;
+  for (const g of game.env.gusts) {
+    if (Math.hypot(boat.x - g.x, boat.y - g.y) < g.r) {
+      if (Math.abs(g.strength - 1) > Math.abs(gustEffect - 1)) gustEffect = g.strength;
+    }
+  }
+  factor *= gustEffect;
+
+  // 해안(왼쪽) 근처는 육지에 깨진 바람, 먼바다(오른쪽)는 해풍 이득
+  if (boat.x < SHORE_W + 140) {
+    factor *= 0.62 + 0.33 * clamp((boat.x - SHORE_W) / 140, 0, 1);
+  } else if (boat.x > WIDTH * 0.72) {
+    factor *= 1.1;
+  }
+
+  const ship = game.env.ship;
+  if (ship) {
+    const down = vecFromCompass(game.wind.direction + 180);
+    const rx = boat.x - ship.x;
+    const ry = boat.y - ship.y;
+    const along = rx * down.x + ry * down.y;
+    const perp = Math.abs(rx * -down.y + ry * down.x);
+    if (along > 0 && along < 300 && perp < ship.len * 0.45) factor *= 0.45;
+  }
+
+  return clamp(factor, 0.25, 1.9);
 }
 
 function updateStartSequence(dt) {
@@ -735,6 +903,7 @@ function update(dt) {
   if (!game.configured || game.paused) return;
   game.simTime += dt;
   updateWind(dt);
+  updateEnvironment(dt);
   updateStartSequence(dt);
   if (game.phase === "racing" || game.phase === "finished") game.elapsed += dt;
 
@@ -910,6 +1079,146 @@ function drawMark(mark, number) {
   ctx.fillStyle = "#0b6f7f";
   ctx.font = "950 11px sans-serif";
   ctx.fillText("↺ CCW", 0, -MARK_ROUNDING_RADIUS + 18);
+  ctx.restore();
+}
+
+function drawShore() {
+  if (game.weatherMode !== "wild") return;
+  ctx.save();
+  const grad = ctx.createLinearGradient(0, 0, SHORE_W + 70, 0);
+  grad.addColorStop(0, "#e8d9a8");
+  grad.addColorStop(0.55, "#dfe9c9");
+  grad.addColorStop(1, "rgba(223,233,201,0)");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, SHORE_W + 70, HEIGHT);
+  ctx.fillStyle = "rgba(255,255,255,.5)";
+  for (let y = 12; y < HEIGHT; y += 34) {
+    ctx.beginPath();
+    ctx.arc(SHORE_W + Math.sin(y / 30 + game.simTime) * 6, y, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.fillStyle = "rgba(11,71,81,.6)";
+  ctx.font = "950 11px sans-serif";
+  ctx.save();
+  ctx.translate(16, HEIGHT / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.textAlign = "center";
+  ctx.fillText("SHORE · LIGHT AIR", 0, 0);
+  ctx.restore();
+  ctx.restore();
+}
+
+function drawGusts() {
+  if (game.weatherMode !== "wild") return;
+  for (const g of game.env.gusts) {
+    const fade = Math.max(0, Math.min(1, g.age / 1.2, (g.life - g.age) / 1.5));
+    const dark = g.strength > 1;
+    ctx.save();
+    ctx.globalAlpha = fade;
+    ctx.fillStyle = dark ? "rgba(23,94,138,.22)" : "rgba(255,255,255,.34)";
+    ctx.beginPath();
+    ctx.ellipse(g.x, g.y, g.r, g.r * 0.72, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = dark ? "rgba(23,94,138,.32)" : "rgba(255,255,255,.42)";
+    ctx.setLineDash([6, 8]);
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = dark ? "rgba(9,60,92,.8)" : "rgba(90,130,140,.85)";
+    ctx.font = "950 11px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(dark ? "GUST +" : "LULL −", g.x, g.y + 4);
+    ctx.restore();
+  }
+}
+
+function drawReefs() {
+  for (const reef of game.env.reefs) {
+    ctx.save();
+    ctx.translate(reef.x, reef.y);
+    ctx.setLineDash([5, 6]);
+    ctx.strokeStyle = "rgba(90,110,120,.7)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, reef.r + 10, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "#7d8a90";
+    ctx.strokeStyle = "#4c585e";
+    [[-12, 2, 13], [8, -6, 10], [10, 10, 9], [-2, -12, 8]].forEach(([ox, oy, r]) => {
+      ctx.beginPath();
+      ctx.moveTo(ox - r, oy + r * 0.6);
+      ctx.lineTo(ox, oy - r);
+      ctx.lineTo(ox + r, oy + r * 0.6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    });
+    ctx.fillStyle = "rgba(255,255,255,.7)";
+    for (let i = 0; i < 3; i += 1) {
+      const a = game.simTime * 1.4 + i * 2.1;
+      ctx.beginPath();
+      ctx.arc(Math.cos(a) * (reef.r + 4), Math.sin(a) * (reef.r + 4) * 0.8, 2.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = "#3f4c52";
+    ctx.font = "950 10px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(t("gReefLabel"), 0, reef.r + 24);
+    ctx.restore();
+  }
+}
+
+function drawShip() {
+  const s = game.env.ship;
+  if (!s) return;
+
+  // 배 뒤로 드리우는 바람 그늘
+  const down = vecFromCompass(game.wind.direction + 180);
+  const px = -down.y;
+  const py = down.x;
+  const hw = s.len * 0.45;
+  ctx.save();
+  ctx.fillStyle = "rgba(60,90,110,.12)";
+  ctx.beginPath();
+  ctx.moveTo(s.x + px * hw, s.y + py * hw);
+  ctx.lineTo(s.x - px * hw, s.y - py * hw);
+  ctx.lineTo(s.x - px * hw * 0.7 + down.x * 300, s.y - py * hw * 0.7 + down.y * 300);
+  ctx.lineTo(s.x + px * hw * 0.7 + down.x * 300, s.y + py * hw * 0.7 + down.y * 300);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(s.x, s.y);
+  ctx.scale(s.dir, 1);
+  ctx.shadowColor = "rgba(0,0,0,.25)";
+  ctx.shadowBlur = 14;
+  ctx.shadowOffsetY = 7;
+  ctx.fillStyle = "#5f6d76";
+  ctx.strokeStyle = "#2f3b42";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-s.len / 2, -s.beam / 2);
+  ctx.lineTo(s.len / 2 - 34, -s.beam / 2);
+  ctx.lineTo(s.len / 2, 0);
+  ctx.lineTo(s.len / 2 - 34, s.beam / 2);
+  ctx.lineTo(-s.len / 2, s.beam / 2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.shadowColor = "transparent";
+  ctx.fillStyle = "#d8dee2";
+  ctx.fillRect(-s.len / 2 + 12, -s.beam / 2 + 8, 34, s.beam - 16);
+  ctx.fillStyle = "#c25b4e";
+  ctx.fillRect(-s.len / 2 + 54, -s.beam / 2 + 7, 26, 14);
+  ctx.fillStyle = "#3d6e9e";
+  ctx.fillRect(-s.len / 2 + 84, -s.beam / 2 + 7, 26, 14);
+  ctx.scale(s.dir, 1);
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "950 11px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("SHIP", 0, s.beam / 2 - 6);
   ctx.restore();
 }
 
@@ -1103,12 +1412,16 @@ function drawFinishSummary() {
 function draw() {
   const decision = classifyRightOfWay();
   drawWater();
+  drawShore();
+  drawGusts();
   drawCourse();
+  drawReefs();
   drawTargetLine(game.boats.A);
   drawTargetLine(game.boats.B);
   drawRightOfWayLink(decision);
   drawBoat(game.boats.A, decision);
   drawBoat(game.boats.B, decision);
+  drawShip();
   drawWindIndicator();
   drawFinishSummary();
   updateDashboard(decision);
@@ -1311,7 +1624,7 @@ window.addEventListener("blur", () => keys.clear());
 ui.setupForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const data = new FormData(ui.setupForm);
-  resetRace(data.get("course"), Number(data.get("sequence")));
+  resetRace(data.get("course"), Number(data.get("sequence")), data.get("weather"));
   ui.setupOverlay.hidden = true;
   document.getElementById("raceArena").scrollIntoView({ behavior: "smooth", block: "start" });
 });
