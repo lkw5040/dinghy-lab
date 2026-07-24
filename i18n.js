@@ -18,6 +18,7 @@
   var COMMON_I18N = {
     en: {
       navHome: "Home",
+      navRulebook: "Rulebook",
       navSimulator: "Rules Simulator",
       navGame: "Race Game",
       navAbout: "About",
@@ -38,6 +39,7 @@
     },
     ko: {
       navHome: "홈",
+      navRulebook: "규칙집",
       navSimulator: "권리정 시뮬레이터",
       navGame: "레이스 게임",
       navAbout: "소개",
@@ -58,6 +60,7 @@
     },
     es: {
       navHome: "Inicio",
+      navRulebook: "Reglamento",
       navSimulator: "Simulador de reglas",
       navGame: "Juego de regatas",
       navAbout: "Acerca de",
@@ -78,6 +81,7 @@
     },
     fr: {
       navHome: "Accueil",
+      navRulebook: "Règlement",
       navSimulator: "Simulateur de règles",
       navGame: "Jeu de régate",
       navAbout: "À propos",
@@ -98,6 +102,7 @@
     },
     de: {
       navHome: "Start",
+      navRulebook: "Regelwerk",
       navSimulator: "Regel-Simulator",
       navGame: "Regatta-Spiel",
       navAbout: "Über",
@@ -225,6 +230,29 @@
     picker.addEventListener("change", function () { setLang(picker.value); });
   }
 
+  /* 규칙집(Rulebook) 링크가 없는 페이지(예: 사용자가 관리하는 index.html)에는
+     헤더/푸터에 링크를 자동 삽입해 사이트 전체에서 접근·검색 노출되게 한다. */
+  function injectRulebookNav() {
+    var nav = document.querySelector(".hub-nav");
+    if (nav && !nav.querySelector('a[href="rules.html"]')) {
+      var a = document.createElement("a");
+      a.href = "rules.html";
+      a.setAttribute("data-i18n", "navRulebook");
+      a.textContent = "Rulebook";
+      var home = nav.querySelector('a[href="index.html"]');
+      if (home && home.nextSibling) nav.insertBefore(a, home.nextSibling);
+      else nav.appendChild(a);
+    }
+    var foot = document.querySelector(".hub-footer-links");
+    if (foot && !foot.querySelector('a[href="rules.html"]')) {
+      var fa = document.createElement("a");
+      fa.href = "rules.html";
+      fa.setAttribute("data-i18n", "navRulebook");
+      fa.textContent = "Rulebook";
+      foot.insertBefore(fa, foot.firstChild);
+    }
+  }
+
   window.HubI18n = {
     t: t,
     get lang() { return lang; },
@@ -235,6 +263,7 @@
   };
 
   buildPicker();
+  injectRulebookNav();
   injectSeoLinks();
   apply();
 })();

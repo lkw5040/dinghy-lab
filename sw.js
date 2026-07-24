@@ -1,11 +1,12 @@
 /* Service worker — bump VERSION on every deploy so visitors get the new files */
-const VERSION = "v1.0.6";
+const VERSION = "v1.0.7";
 const CACHE = `dinghy-lab-${VERSION}`;
 const CORE = [
   "./",
   "./index.html",
   "./simulator.html",
   "./game.html",
+  "./rules.html",
   "./about.html",
   "./privacy.html",
   "./terms.html",
@@ -13,6 +14,7 @@ const CORE = [
   "./sim.css",
   "./game.css",
   "./hub.css",
+  "./rules.css",
   "./i18n.js",
   "./site-config.js",
   "./ads.js",
@@ -21,6 +23,8 @@ const CORE = [
   "./simulator.js",
   "./game-i18n.js",
   "./game.js",
+  "./rules-i18n.js",
+  "./rules.js",
   "./manifest.webmanifest",
   "./assets/hero-dinghy.png",
   "./assets/logo.svg",
